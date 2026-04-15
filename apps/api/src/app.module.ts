@@ -15,6 +15,7 @@ import { ClockModule } from './clock/clock.module';
 import { SyncModule } from './sync/sync.module';
 import { ReferenceModule } from './reference/reference.module';
 import { EventsModule } from './events/events.module';
+import { HealthController } from './health.controller';
 
 @Module({
   imports: [
@@ -35,5 +36,6 @@ import { EventsModule } from './events/events.module';
     ReferenceModule,
     EventsModule,
   ],
+  controllers: [HealthController],
 })
 export class AppModule {}
