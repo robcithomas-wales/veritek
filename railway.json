@@ -1,11 +1,7 @@
 {
   "$schema": "https://railway.app/railway.schema.json",
-  "build": {
-    "builder": "NIXPACKS",
-    "buildCommand": "pnpm install && pnpm --filter @veritek/api db:generate && pnpm --filter @veritek/api build"
-  },
   "deploy": {
-    "startCommand": "node apps/api/dist/main.js",
+    "healthcheckPath": "/health",
     "restartPolicyType": "ON_FAILURE",
     "restartPolicyMaxRetries": 10
   }

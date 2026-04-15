@@ -16,6 +16,8 @@ async function bootstrap() {
   const port = process.env.PORT ?? 4000;
   const logger = new Logger('Bootstrap');
 
+  app.getHttpAdapter().get('/health', (_req: unknown, res: { send: (s: string) => void }) => res.send('ok'));
+
   await app.listen(port, '0.0.0.0');
   logger.log(`API running on http://localhost:${port} [${process.env.NODE_ENV ?? 'development'}]`);
 }
