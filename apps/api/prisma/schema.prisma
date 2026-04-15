@@ -1,0 +1,486 @@
+// ─── Generator & datasource ───────────────────────────────────────────────────
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+// ─── Users & warehouses ───────────────────────────────────────────────────────
+
+model User {
+  id          String   @id @default(cuid())
+  supabaseId  String   @unique @map("supabase_id")
+  email       String   @unique
+  firstName   String   @map("first_name")
+  lastName    String   @map("last_name")
+  role        UserRole
+  warehouseId String?  @map("warehouse_id")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+  deletedAt   DateTime? @map("deleted_at")
+
+  warehouse        Warehouse?        @relation(fields: [warehouseId], references: [id])
+  serviceOrders    ServiceOrder[]
+  privateActivities PrivateActivity[]
+  clockEvents      ClockEvent[]
+  stockItems       StockItem[]
+  shipments        Shipment[]
+  apiKeys          ApiKey[]
+
+  @@map("users")
+}
+
+model Warehouse {
+  id        String   @id @default(cuid())
+  name      String
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  users     User[]
+  shipments Shipment[]
+  returns   ReturnProduct[]
+
+  @@map("warehouses")
+}
+
+// ─── Sites ────────────────────────────────────────────────────────────────────
+
+model Site {
+  id        String   @id @default(cuid())
+  name      String
+  address   String?
+  postcode  String?
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  serviceOrders ServiceOrder[]
+  items         Item[]
+  shipments     Shipment[]
+
+  @@map("sites")
+}
+
+// ─── Service orders ───────────────────────────────────────────────────────────
+
+model ServiceOrder {
+  id           String             @id @default(cuid())
+  assignedToId String             @map("assigned_to_id")
+  siteId       String             @map("site_id")
+  priority     Int
+  status       ServiceOrderStatus @default(received)
+  description  String?
+  reference    String?
+  createdAt    DateTime           @default(now()) @map("created_at")
+  updatedAt    DateTime           @updatedAt @map("updated_at")
+
+  assignedTo  User         @relation(fields: [assignedToId], references: [id])
+  site        Site         @relation(fields: [siteId], references: [id])
+  activities  Activity[]
+  items       Item[]
+  materials   Material[]
+  attachments Attachment[]
+
+  @@map("service_orders")
+}
+
+// ─── Activities ───────────────────────────────────────────────────────────────
+
+model Activity {
+  id             String         @id @default(cuid())
+  serviceOrderId String         @map("service_order_id")
+  type           ActivityType
+  status         ActivityStatus @default(open)
+  startTravel    DateTime?      @map("start_travel")
+  startWork      DateTime?      @map("start_work")
+  endWork        DateTime?      @map("end_work")
+  travelDistance Int            @default(0) @map("travel_distance")
+  stopCode       String?        @map("stop_code")
+  comments       String?
+  createdAt      DateTime       @default(now()) @map("created_at")
+  updatedAt      DateTime       @updatedAt @map("updated_at")
+
+  serviceOrder       ServiceOrder        @relation(fields: [serviceOrderId], references: [id])
+  checklistResponses ChecklistResponse[]
+
+  @@map("activities")
+}
+
+// ─── Items (equipment) ────────────────────────────────────────────────────────
+
+model Item {
+  id             String   @id @default(cuid())
+  serviceOrderId String   @map("service_order_id")
+  siteId         String   @map("site_id")
+  productId      String   @map("product_id")
+  serialNumber   String?  @map("serial_number")
+  tagNumber      String?  @map("tag_number")
+  installDate    DateTime? @map("install_date")
+  warrantyExpiry DateTime? @map("warranty_expiry")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  serviceOrder ServiceOrder @relation(fields: [serviceOrderId], references: [id])
+  site         Site         @relation(fields: [siteId], references: [id])
+  product      Product      @relation(fields: [productId], references: [id])
+
+  @@map("items")
+}
+
+// ─── Materials (parts) ────────────────────────────────────────────────────────
+
+model Material {
+  id             String              @id @default(cuid())
+  serviceOrderId String              @map("service_order_id")
+  productId      String              @map("product_id")
+  qty            Int                 @default(1)
+  status         MaterialStatus      @default(needed)
+  disposition    MaterialDisposition @default(open)
+  returnable     Boolean             @default(false)
+  createdAt      DateTime            @default(now()) @map("created_at")
+  updatedAt      DateTime            @updatedAt @map("updated_at")
+
+  serviceOrder  ServiceOrder   @relation(fields: [serviceOrderId], references: [id])
+  product       Product        @relation(fields: [productId], references: [id])
+  returnProduct ReturnProduct?
+
+  @@map("materials")
+}
+
+model ReturnProduct {
+  id          String   @id @default(cuid())
+  materialId  String   @unique @map("material_id")
+  reason      String
+  warehouseId String   @map("warehouse_id")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  material  Material  @relation(fields: [materialId], references: [id])
+  warehouse Warehouse @relation(fields: [warehouseId], references: [id])
+
+  @@map("return_products")
+}
+
+// ─── Attachments ──────────────────────────────────────────────────────────────
+
+model Attachment {
+  id             String   @id @default(cuid())
+  serviceOrderId String   @map("service_order_id")
+  url            String
+  filename       String
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  serviceOrder ServiceOrder @relation(fields: [serviceOrderId], references: [id])
+
+  @@map("attachments")
+}
+
+// ─── Products & stock ─────────────────────────────────────────────────────────
+
+model Product {
+  id          String   @id @default(cuid())
+  sku         String   @unique
+  name        String
+  description String?
+  returnable  Boolean  @default(false)
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  items      Item[]
+  materials  Material[]
+  stockItems StockItem[]
+  shipLines  ShipLine[]
+
+  @@map("products")
+}
+
+model StockItem {
+  id           String   @id @default(cuid())
+  userId       String   @map("user_id")
+  warehouseId  String   @map("warehouse_id")
+  productId    String   @map("product_id")
+  serialNumber String?  @map("serial_number")
+  qty          Int      @default(0)
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  user    User    @relation(fields: [userId], references: [id])
+  product Product @relation(fields: [productId], references: [id])
+
+  @@map("stock_items")
+}
+
+// ─── Shipments (parts returns) ────────────────────────────────────────────────
+
+model Shipment {
+  id            String   @id @default(cuid())
+  userId        String   @map("user_id")
+  siteId        String   @map("site_id")
+  destinationId String   @map("destination_id")
+  createdAt     DateTime @default(now()) @map("created_at")
+  updatedAt     DateTime @updatedAt @map("updated_at")
+
+  user        User      @relation(fields: [userId], references: [id])
+  site        Site      @relation(fields: [siteId], references: [id])
+  destination Warehouse @relation(fields: [destinationId], references: [id])
+  shipLines   ShipLine[]
+
+  @@map("shipments")
+}
+
+model ShipLine {
+  id           String   @id @default(cuid())
+  shipmentId   String   @map("shipment_id")
+  productId    String   @map("product_id")
+  serialNumber String?  @map("serial_number")
+  qty          Int      @default(1)
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  shipment Shipment @relation(fields: [shipmentId], references: [id])
+  product  Product  @relation(fields: [productId], references: [id])
+
+  @@map("ship_lines")
+}
+
+// ─── Private activities ───────────────────────────────────────────────────────
+
+model PrivateActivity {
+  id        String              @id @default(cuid())
+  userId    String              @map("user_id")
+  type      PrivateActivityType
+  startTime DateTime            @map("start_time")
+  endTime   DateTime?           @map("end_time")
+  done      Boolean             @default(false)
+  notes     String?
+  createdAt DateTime            @default(now()) @map("created_at")
+  updatedAt DateTime            @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@map("private_activities")
+}
+
+// ─── Clock events ─────────────────────────────────────────────────────────────
+
+model ClockEvent {
+  id        String         @id @default(cuid())
+  userId    String         @map("user_id")
+  type      ClockEventType
+  timestamp DateTime
+  createdAt DateTime       @default(now()) @map("created_at")
+  updatedAt DateTime       @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@map("clock_events")
+}
+
+// ─── Checklists ───────────────────────────────────────────────────────────────
+
+model ChecklistQuestion {
+  id        String   @id @default(cuid())
+  itemType  String   @map("item_type")
+  question  String
+  order     Int
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  responses ChecklistResponse[]
+
+  @@map("checklist_questions")
+}
+
+model ChecklistResponse {
+  id         String   @id @default(cuid())
+  activityId String   @map("activity_id")
+  questionId String   @map("question_id")
+  answer     String
+  createdAt  DateTime @default(now()) @map("created_at")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  activity Activity          @relation(fields: [activityId], references: [id])
+  question ChecklistQuestion @relation(fields: [questionId], references: [id])
+
+  @@map("checklist_responses")
+}
+
+// ─── Reference data ───────────────────────────────────────────────────────────
+
+model StopCode {
+  code        String   @id
+  description String
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@map("stop_codes")
+}
+
+model DeliveryType {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@map("delivery_types")
+}
+
+// ─── Webhooks ─────────────────────────────────────────────────────────────────
+
+model WebhookSubscription {
+  id          String   @id @default(cuid())
+  name        String
+  eventTypes  String[] @map("event_types")
+  endpointUrl String   @map("endpoint_url")
+  secretHash  String   @map("secret_hash")
+  isActive    Boolean  @default(true) @map("is_active")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  deliveries WebhookDelivery[]
+
+  @@map("webhook_subscriptions")
+}
+
+model WebhookDelivery {
+  id             String                @id @default(cuid())
+  subscriptionId String                @map("subscription_id")
+  eventType      String                @map("event_type")
+  payload        Json
+  status         WebhookDeliveryStatus @default(pending)
+  attempts       Int                   @default(0)
+  nextRetryAt    DateTime?             @map("next_retry_at")
+  responseCode   Int?                  @map("response_code")
+  responseBody   String?               @map("response_body")
+  createdAt      DateTime              @default(now()) @map("created_at")
+  updatedAt      DateTime              @updatedAt @map("updated_at")
+
+  subscription WebhookSubscription @relation(fields: [subscriptionId], references: [id])
+
+  @@index([status, nextRetryAt])
+  @@map("webhook_deliveries")
+}
+
+// ─── API keys ─────────────────────────────────────────────────────────────────
+
+model ApiKey {
+  id        String   @id @default(cuid())
+  name      String
+  keyHash   String   @unique @map("key_hash")
+  scopes    String[]
+  isActive  Boolean  @default(true) @map("is_active")
+  createdById String @map("created_by_id")
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  deletedAt DateTime? @map("deleted_at")
+
+  createdBy User         @relation(fields: [createdById], references: [id])
+  usage     ApiKeyUsage[]
+
+  @@map("api_keys")
+}
+
+model ApiKeyUsage {
+  id           String   @id @default(cuid())
+  apiKeyId     String   @map("api_key_id")
+  endpoint     String
+  responseCode Int      @map("response_code")
+  timestamp    DateTime
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  apiKey ApiKey @relation(fields: [apiKeyId], references: [id])
+
+  @@index([apiKeyId, timestamp])
+  @@map("api_key_usage")
+}
+
+// ─── Enums ────────────────────────────────────────────────────────────────────
+
+enum UserRole {
+  engineer
+  dispatcher
+  admin
+
+  @@map("user_role")
+}
+
+enum ServiceOrderStatus {
+  received
+  accepted
+  in_route    @map("in-route")
+  in_progress @map("in-progress")
+  completed
+  closed
+
+  @@map("service_order_status")
+}
+
+enum ActivityType {
+  break_fix              @map("break-fix")
+  preventive_maintenance @map("preventive-maintenance")
+  installation
+  other
+
+  @@map("activity_type")
+}
+
+enum ActivityStatus {
+  open
+  travel
+  work
+  complete
+
+  @@map("activity_status")
+}
+
+enum MaterialStatus {
+  needed
+  allocated
+  back_ordered @map("back-ordered")
+  fulfilled
+  not_used     @map("not-used")
+  cancelled
+
+  @@map("material_status")
+}
+
+enum MaterialDisposition {
+  open
+  fulfilled
+  not_used @map("not-used")
+  doa
+
+  @@map("material_disposition")
+}
+
+enum PrivateActivityType {
+  travel
+  training
+  holiday
+  absence
+  other
+
+  @@map("private_activity_type")
+}
+
+enum ClockEventType {
+  clock_in  @map("clock-in")
+  clock_out @map("clock-out")
+
+  @@map("clock_event_type")
+}
+
+enum WebhookDeliveryStatus {
+  pending
+  delivered
+  failed
+  dead
+
+  @@map("webhook_delivery_status")
+}
