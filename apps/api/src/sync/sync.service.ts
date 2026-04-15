@@ -58,68 +58,68 @@ export class SyncService {
     const createActivity = endpoint.match(/^\/service-orders\/([^/]+)\/activities$/);
     if (method === 'POST' && createActivity) {
       const dto = CreateActivitySchema.parse(body);
-      return this.activities.create(createActivity[1], dto, user);
+      return this.activities.create(createActivity[1]!, dto, user);
     }
 
     // PATCH /activities/:id/start-travel
     const startTravel = endpoint.match(/^\/activities\/([^/]+)\/start-travel$/);
     if (method === 'PATCH' && startTravel) {
-      return this.activities.startTravel(startTravel[1], user);
+      return this.activities.startTravel(startTravel[1]!, user);
     }
 
     // PATCH /activities/:id/start-work
     const startWork = endpoint.match(/^\/activities\/([^/]+)\/start-work$/);
     if (method === 'PATCH' && startWork) {
       const dto = StartWorkSchema.parse(body);
-      return this.activities.startWork(startWork[1], dto, user);
+      return this.activities.startWork(startWork[1]!, dto, user);
     }
 
     // PATCH /activities/:id/stop-work
     const stopWork = endpoint.match(/^\/activities\/([^/]+)\/stop-work$/);
     if (method === 'PATCH' && stopWork) {
       const dto = StopWorkSchema.parse(body);
-      return this.activities.stopWork(stopWork[1], dto, user);
+      return this.activities.stopWork(stopWork[1]!, dto, user);
     }
 
     // POST /activities/:id/checklist-responses
     const checklist = endpoint.match(/^\/activities\/([^/]+)\/checklist-responses$/);
     if (method === 'POST' && checklist) {
       const dto = SubmitChecklistSchema.parse(body);
-      return this.activities.submitChecklist(checklist[1], dto);
+      return this.activities.submitChecklist(checklist[1]!, dto);
     }
 
     // POST /service-orders/:id/complete
     const complete = endpoint.match(/^\/service-orders\/([^/]+)\/complete$/);
     if (method === 'POST' && complete) {
       const { signedBy } = body as { signedBy: string };
-      return this.activities.complete(complete[1], user, signedBy);
+      return this.activities.complete(complete[1]!, user, signedBy);
     }
 
     // PATCH /service-orders/:id/accept
     const accept = endpoint.match(/^\/service-orders\/([^/]+)\/accept$/);
     if (method === 'PATCH' && accept) {
-      return this.serviceOrders.accept(accept[1], user);
+      return this.serviceOrders.accept(accept[1]!, user);
     }
 
     // PATCH /service-orders/:id/reject
     const reject = endpoint.match(/^\/service-orders\/([^/]+)\/reject$/);
     if (method === 'PATCH' && reject) {
       const dto = RejectServiceOrderSchema.parse(body);
-      return this.serviceOrders.reject(reject[1], user, dto);
+      return this.serviceOrders.reject(reject[1]!, user, dto);
     }
 
     // POST /service-orders/:id/materials
     const createMaterial = endpoint.match(/^\/service-orders\/([^/]+)\/materials$/);
     if (method === 'POST' && createMaterial) {
       const dto = CreateMaterialSchema.parse(body);
-      return this.materials.create(createMaterial[1], dto, user);
+      return this.materials.create(createMaterial[1]!, dto, user);
     }
 
     // PATCH /materials/:id
     const updateMaterial = endpoint.match(/^\/materials\/([^/]+)$/);
     if (method === 'PATCH' && updateMaterial) {
       const dto = UpdateMaterialSchema.parse(body);
-      return this.materials.update(updateMaterial[1], dto, user);
+      return this.materials.update(updateMaterial[1]!, dto, user);
     }
 
     // POST /clock

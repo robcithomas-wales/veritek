@@ -94,7 +94,7 @@ export class ActivitiesService {
         status: 'complete',
         endWork: new Date(),
         stopCode: dto.stopCode,
-        comments: dto.comments,
+        comments: dto.comments ?? null,
       },
     });
   }

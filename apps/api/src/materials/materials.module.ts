@@ -8,5 +8,6 @@ import { EventsModule } from '../events/events.module';
   imports: [AuthModule, EventsModule],
   controllers: [MaterialsController],
   providers: [MaterialsService],
+  exports: [MaterialsService],
 })
 export class MaterialsModule {}

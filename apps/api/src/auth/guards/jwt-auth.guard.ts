@@ -6,7 +6,8 @@ import {
   ForbiddenException,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import { jwtVerify, createSecretKey } from 'jose';
+import { jwtVerify } from 'jose';
+import { createSecretKey } from 'crypto';
 import { PrismaService } from '../../prisma/prisma.service';
 import { ROLES_KEY } from '../decorators/roles.decorator';
 import type { UserRole } from '@prisma/client';

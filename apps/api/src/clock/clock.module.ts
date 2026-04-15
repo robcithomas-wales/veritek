@@ -8,5 +8,6 @@ import { EventsModule } from '../events/events.module';
   imports: [AuthModule, EventsModule],
   controllers: [ClockController],
   providers: [ClockService],
+  exports: [ClockService],
 })
 export class ClockModule {}

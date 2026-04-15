@@ -1,0 +1,8 @@
+#!/bin/sh
+set -e
+
+echo "▶ Running tests before push..."
+
+pnpm --filter @veritek/api test --passWithNoTests
+
+echo "✓ All tests passed."

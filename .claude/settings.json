@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx prisma *)",
+      "Bash(pbcopy)",
+      "Bash(pnpm dev *)",
+      "Bash(kill %1)",
+      "Read(//private/tmp/**)",
+      "Bash(ls /Users/clubspark/veritek/apps/api/src/**/*.spec.ts)",
+      "Bash(pnpm --filter @veritek/api add -D jest ts-jest @types/jest @nestjs/testing)",
+      "Bash(pnpm --filter @veritek/api add -D @nestjs/testing@^10.0.0)",
+      "Bash(chmod +x /Users/clubspark/veritek/.githooks/pre-push)",
+      "Bash(git -C /Users/clubspark/veritek config core.hooksPath .githooks)",
+      "Bash(pnpm --filter @veritek/api test)"
+    ]
+  }
+}
