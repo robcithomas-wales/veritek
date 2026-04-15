@@ -1,0 +1,49 @@
+{
+  "expo": {
+    "name": "Veritek",
+    "slug": "veritek",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#1d4ed8"
+    },
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.veritek.fieldservice"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#1d4ed8"
+      },
+      "package": "com.veritek.fieldservice"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-secure-store",
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/notification-icon.png",
+          "color": "#1d4ed8"
+        }
+      ],
+      [
+        "expo-camera",
+        { "cameraPermission": "Allow Veritek to access your camera for photo attachments." }
+      ],
+      [
+        "expo-location",
+        { "locationWhenInUsePermission": "Allow Veritek to access your location for travel tracking." }
+      ]
+    ],
+    "scheme": "veritek",
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}
