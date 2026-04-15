@@ -3,7 +3,7 @@
   "version": "0.0.1",
   "private": true,
   "scripts": {
-    "prebuild": "prisma generate",
+    "prebuild": "pnpm --filter @veritek/validators build && prisma generate",
     "build": "nest build",
     "dev": "nest start --watch",
     "start": "node dist/main",
