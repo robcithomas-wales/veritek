@@ -28,6 +28,7 @@ Then paste into the Supabase SQL editor and run.
 **Project name:** Veritek
 **Environment:** production
 **GitHub:** connected to `@veritek/api` (monorepo root)
+**Public URL:** `https://veritekapi-production.up.railway.app`
 
 ### Services
 | Service | Purpose | Deploy? |

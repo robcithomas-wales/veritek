@@ -3,6 +3,6 @@ set -e
 
 echo "▶ Running tests before push..."
 
-pnpm --filter @veritek/api test --passWithNoTests
+pnpm --filter @veritek/api test
 
 echo "✓ All tests passed."
