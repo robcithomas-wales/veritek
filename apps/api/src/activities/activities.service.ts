@@ -109,7 +109,7 @@ export class ActivitiesService {
       throw new NotFoundException('Service order not found');
     }
     const hasIncomplete = order.activities.some(
-      (a) => a.status !== 'complete',
+      (a: { status: string }) => a.status !== 'complete',
     );
     if (hasIncomplete) {
       throw new BadRequestException('All activities must be completed before closing the order');
