@@ -6,6 +6,11 @@ import { queryClient } from '../lib/query-client';
 import { initQueue } from '../lib/mutation-queue/db';
 import { flushQueue } from '../lib/mutation-queue/sync';
 import { supabase } from '../lib/supabase';
+import {
+  subscribeToJobAssignments,
+  unsubscribeFromJobAssignments,
+} from '../lib/realtime';
+import { registerPushToken } from '../lib/push-notifications';
 import { useRouter, useSegments } from 'expo-router';
 import { useState } from 'react';
 import type { Session } from '@supabase/supabase-js';
@@ -24,6 +29,7 @@ function AuthGate({ children }: { children: React.ReactNode }) {
     });
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_e, s) => {
       setSession(s);
+      if (!s) unsubscribeFromJobAssignments();
     });
     return () => subscription.unsubscribe();
   }, []);
@@ -34,6 +40,8 @@ function AuthGate({ children }: { children: React.ReactNode }) {
     if (!session && !inAuth) router.replace('/(auth)/login');
     if (session && inAuth) {
       flushQueue();
+      subscribeToJobAssignments(session.user.id);
+      registerPushToken().catch(() => {/* non-critical */});
       router.replace('/(tabs)');
     }
   }, [session, ready, segments]);

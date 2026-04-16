@@ -24,13 +24,15 @@ model User {
   updatedAt   DateTime @updatedAt @map("updated_at")
   deletedAt   DateTime? @map("deleted_at")
 
-  warehouse        Warehouse?        @relation(fields: [warehouseId], references: [id])
-  serviceOrders    ServiceOrder[]
+  warehouse         Warehouse?         @relation(fields: [warehouseId], references: [id])
+  serviceOrders     ServiceOrder[]
   privateActivities PrivateActivity[]
-  clockEvents      ClockEvent[]
-  stockItems       StockItem[]
-  shipments        Shipment[]
-  apiKeys          ApiKey[]
+  clockEvents       ClockEvent[]
+  stockItems        StockItem[]
+  stockAdjustments  StockAdjustment[]
+  shipments         Shipment[]
+  apiKeys           ApiKey[]
+  deviceTokens      DeviceToken[]
 
   @@map("users")
 }
@@ -191,10 +193,11 @@ model Product {
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")
 
-  items      Item[]
-  materials  Material[]
-  stockItems StockItem[]
-  shipLines  ShipLine[]
+  items            Item[]
+  materials        Material[]
+  stockItems       StockItem[]
+  stockAdjustments StockAdjustment[]
+  shipLines        ShipLine[]
 
   @@map("products")
 }
@@ -215,15 +218,33 @@ model StockItem {
   @@map("stock_items")
 }
 
+// ─── Stock adjustments ────────────────────────────────────────────────────────
+
+model StockAdjustment {
+  id        String   @id @default(cuid())
+  userId    String   @map("user_id")
+  productId String   @map("product_id")
+  delta     Int
+  reason    String
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user    User    @relation(fields: [userId], references: [id])
+  product Product @relation(fields: [productId], references: [id])
+
+  @@map("stock_adjustments")
+}
+
 // ─── Shipments (parts returns) ────────────────────────────────────────────────
 
 model Shipment {
-  id            String   @id @default(cuid())
-  userId        String   @map("user_id")
-  siteId        String   @map("site_id")
-  destinationId String   @map("destination_id")
-  createdAt     DateTime @default(now()) @map("created_at")
-  updatedAt     DateTime @updatedAt @map("updated_at")
+  id            String          @id @default(cuid())
+  userId        String          @map("user_id")
+  siteId        String          @map("site_id")
+  destinationId String          @map("destination_id")
+  type          ShipmentType    @default(return)
+  status        ShipmentStatus  @default(pending)
+  createdAt     DateTime        @default(now()) @map("created_at")
+  updatedAt     DateTime        @updatedAt @map("updated_at")
 
   user        User      @relation(fields: [userId], references: [id])
   site        Site      @relation(fields: [siteId], references: [id])
@@ -246,6 +267,21 @@ model ShipLine {
   product  Product  @relation(fields: [productId], references: [id])
 
   @@map("ship_lines")
+}
+
+// ─── Device tokens ────────────────────────────────────────────────────────────
+
+model DeviceToken {
+  id        String   @id @default(cuid())
+  userId    String   @map("user_id")
+  token     String   @unique
+  platform  String
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@map("device_tokens")
 }
 
 // ─── Private activities ───────────────────────────────────────────────────────
@@ -474,6 +510,21 @@ enum ClockEventType {
   clock_out @map("clock-out")
 
   @@map("clock_event_type")
+}
+
+enum ShipmentType {
+  return
+  on_site_collection @map("on-site-collection")
+
+  @@map("shipment_type")
+}
+
+enum ShipmentStatus {
+  pending
+  collected
+  cancelled
+
+  @@map("shipment_status")
 }
 
 enum WebhookDeliveryStatus {

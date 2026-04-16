@@ -37,6 +37,10 @@ export type PrivateActivityType =
 
 export type ClockEventType = 'clock_in' | 'clock_out';
 
+export type ShippingRequestType = 'return' | 'on_site_collection';
+
+export type ShippingRequestStatus = 'pending' | 'collected' | 'cancelled';
+
 export type WebhookDeliveryStatus = 'pending' | 'delivered' | 'failed' | 'dead';
 
 export type DomainEvent =
@@ -170,6 +174,8 @@ export interface Shipment {
   userId: string;
   siteId: string;
   destinationId: string;
+  type: ShippingRequestType;
+  status: ShippingRequestStatus;
   shipLines: ShipLine[];
   createdAt: string;
   updatedAt: string;
@@ -217,6 +223,19 @@ export interface StockItem {
   qty: number;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface VanStockItem extends StockItem {
+  product: Product;
+}
+
+export interface StockAdjustment {
+  id: string;
+  userId: string;
+  productId: string;
+  delta: number;
+  reason: string;
+  createdAt: string;
 }
 
 export interface Product {

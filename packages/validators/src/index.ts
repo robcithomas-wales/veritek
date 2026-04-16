@@ -76,6 +76,62 @@ export const SyncRequestSchema = z.object({
   mutations: z.array(SyncMutationSchema).min(1).max(100),
 });
 
+// ─── Private Activities ───────────────────────────────────────────────────────
+
+export const CreatePrivateActivitySchema = z.object({
+  type: z.enum(['travel', 'training', 'holiday', 'absence', 'other']),
+  startTime: z.string().datetime(),
+  notes: z.string().optional(),
+});
+
+export const CompletePrivateActivitySchema = z.object({
+  endTime: z.string().datetime(),
+});
+
+export const ListPrivateActivitiesSchema = z.object({
+  from: z.string().datetime().optional(),
+  to: z.string().datetime().optional(),
+  page: z.coerce.number().int().positive().default(1),
+  pageSize: z.coerce.number().int().positive().max(100).default(20),
+});
+
+// ─── Inventory ────────────────────────────────────────────────────────────────
+
+export const AdjustStockSchema = z.object({
+  productId: z.string().cuid(),
+  delta: z.number().int(),
+  reason: z.string().min(1),
+});
+
+export const SearchInventorySchema = z.object({
+  query: z.string().optional(),
+  warehouseId: z.string().cuid().optional(),
+});
+
+export const TransferStockSchema = z.object({
+  productId: z.string().cuid(),
+  qty: z.number().int().positive(),
+  toEngineerId: z.string().cuid(),
+});
+
+// ─── Shipping ─────────────────────────────────────────────────────────────────
+
+export const ShipLineInputSchema = z.object({
+  productId: z.string().cuid(),
+  qty: z.number().int().positive(),
+  serialNumber: z.string().optional(),
+});
+
+export const CreateShipmentSchema = z.object({
+  siteId: z.string().cuid(),
+  destinationId: z.string().cuid(),
+  lines: z.array(ShipLineInputSchema).min(1),
+});
+
+export const UpdateShipmentStatusSchema = z.object({
+  status: z.enum(['pending', 'collected', 'cancelled']),
+});
+
 // ─── Inferred types ───────────────────────────────────────────────────────────
 
 export type RejectServiceOrderDto = z.infer<typeof RejectServiceOrderSchema>;
@@ -88,3 +144,11 @@ export type CreateMaterialDto = z.infer<typeof CreateMaterialSchema>;
 export type UpdateMaterialDto = z.infer<typeof UpdateMaterialSchema>;
 export type ClockEventDto = z.infer<typeof ClockEventSchema>;
 export type SyncRequestDto = z.infer<typeof SyncRequestSchema>;
+export type CreatePrivateActivityDto = z.infer<typeof CreatePrivateActivitySchema>;
+export type CompletePrivateActivityDto = z.infer<typeof CompletePrivateActivitySchema>;
+export type ListPrivateActivitiesDto = z.infer<typeof ListPrivateActivitiesSchema>;
+export type AdjustStockDto = z.infer<typeof AdjustStockSchema>;
+export type SearchInventoryDto = z.infer<typeof SearchInventorySchema>;
+export type TransferStockDto = z.infer<typeof TransferStockSchema>;
+export type CreateShipmentDto = z.infer<typeof CreateShipmentSchema>;
+export type UpdateShipmentStatusDto = z.infer<typeof UpdateShipmentStatusSchema>;

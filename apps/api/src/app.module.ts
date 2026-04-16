@@ -15,6 +15,10 @@ import { ClockModule } from './clock/clock.module';
 import { SyncModule } from './sync/sync.module';
 import { ReferenceModule } from './reference/reference.module';
 import { EventsModule } from './events/events.module';
+import { PrivateActivitiesModule } from './private-activities/private-activities.module';
+import { InventoryModule } from './inventory/inventory.module';
+import { ShippingModule } from './shipping/shipping.module';
+import { NotificationsModule } from './notifications/notifications.module';
 import { HealthController } from './health.controller';
 
 @Module({
@@ -35,6 +39,10 @@ import { HealthController } from './health.controller';
     SyncModule,
     ReferenceModule,
     EventsModule,
+    PrivateActivitiesModule,
+    InventoryModule,
+    ShippingModule,
+    NotificationsModule,
   ],
   controllers: [HealthController],
 })

@@ -13,6 +13,11 @@ import type {
   PaginatedResponse,
   SyncRequest,
   SyncResponse,
+  PrivateActivity,
+  VanStockItem,
+  StockAdjustment,
+  Shipment,
+  Warehouse,
 } from '@veritek/types';
 import type {
   RejectServiceOrderDto,
@@ -24,6 +29,13 @@ import type {
   UpdateMaterialDto,
   ClockEventDto,
   SyncRequestDto,
+  CreatePrivateActivityDto,
+  CompletePrivateActivityDto,
+  AdjustStockDto,
+  SearchInventoryDto,
+  TransferStockDto,
+  CreateShipmentDto,
+  UpdateShipmentStatusDto,
 } from '@veritek/validators';
 
 // ─── Client factory ───────────────────────────────────────────────────────────
@@ -151,6 +163,46 @@ export function createApiClient(config: ApiClientConfig) {
     // ── Sync ───────────────────────────────────────────────────────────────
     sync: {
       flush: (body: SyncRequestDto) => post<SyncResponse>('/sync', body),
+    },
+
+    // ── Private activities ─────────────────────────────────────────────────
+    privateActivities: {
+      list: (params?: Record<string, string>) =>
+        get<PaginatedResponse<PrivateActivity>>('/private-activities', params),
+      create: (body: CreatePrivateActivityDto) =>
+        post<PrivateActivity>('/private-activities', body),
+      complete: (id: string, body: CompletePrivateActivityDto) =>
+        patch<PrivateActivity>(`/private-activities/${id}/complete`, body),
+      remove: (id: string) => del<{ success: boolean }>(`/private-activities/${id}`),
+    },
+
+    // ── Inventory ──────────────────────────────────────────────────────────
+    inventory: {
+      vanStock: () => get<VanStockItem[]>('/inventory/van-stock'),
+      search: (params: SearchInventoryDto) =>
+        get<VanStockItem[]>('/inventory/search', params as Record<string, string>),
+      adjust: (body: AdjustStockDto) =>
+        post<StockAdjustment>('/inventory/adjust', body),
+      transfer: (body: TransferStockDto) =>
+        post<void>('/inventory/transfer', body),
+      warehouses: () => get<Warehouse[]>('/inventory/warehouses'),
+    },
+
+    // ── Shipping ───────────────────────────────────────────────────────────
+    shipping: {
+      list: () => get<Shipment[]>('/shipping'),
+      get: (id: string) => get<Shipment>(`/shipping/${id}`),
+      create: (body: CreateShipmentDto) => post<Shipment>('/shipping', body),
+      updateStatus: (id: string, body: UpdateShipmentStatusDto) =>
+        patch<Shipment>(`/shipping/${id}`, body),
+      removeLine: (id: string, lineId: string) =>
+        del<void>(`/shipping/${id}/lines/${lineId}`),
+    },
+
+    // ── Notifications ──────────────────────────────────────────────────────
+    notifications: {
+      registerToken: (body: { token: string; platform: 'ios' | 'android' }) =>
+        post<void>('/notifications/register', body),
     },
   };
 }

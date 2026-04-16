@@ -20,4 +20,9 @@ export const qk = {
   deliveryTypes: () => ['reference', 'delivery-types'] as const,
   checklists: (itemType: string) => ['reference', 'checklists', itemType] as const,
   history: (params: Record<string, string>) => ['history', params] as const,
+  privateActivities: (params?: Record<string, string>) =>
+    params ? (['private-activities', params] as const) : (['private-activities'] as const),
+  vanStock: () => ['inventory', 'van-stock'] as const,
+  shipping: () => ['shipping'] as const,
+  shipment: (id: string) => ['shipping', id] as const,
 };
