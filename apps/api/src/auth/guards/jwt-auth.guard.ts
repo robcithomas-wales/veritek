@@ -2,6 +2,7 @@ import {
   CanActivate,
   ExecutionContext,
   Injectable,
+  Logger,
   UnauthorizedException,
   ForbiddenException,
 } from '@nestjs/common';
@@ -14,6 +15,8 @@ import type { UserRole } from '@prisma/client';
 
 @Injectable()
 export class JwtAuthGuard implements CanActivate {
+  private readonly logger = new Logger(JwtAuthGuard.name);
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly reflector: Reflector,
@@ -31,10 +34,11 @@ export class JwtAuthGuard implements CanActivate {
 
     let payload: { sub?: string; email?: string };
     try {
-      const key = createSecretKey(Buffer.from(secret, 'utf-8'));
+      const key = createSecretKey(Buffer.from(secret, 'base64'));
       const { payload: p } = await jwtVerify(token, key);
       payload = p as typeof payload;
-    } catch {
+    } catch (err) {
+      this.logger.error('JWT verify failed', String(err));
       throw new UnauthorizedException('Invalid or expired token');
     }
 
