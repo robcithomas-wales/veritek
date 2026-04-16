@@ -85,18 +85,18 @@ describe('ActivitiesService', () => {
   describe('create', () => {
     it('throws NotFoundException when service order does not exist', async () => {
       mockPrisma.serviceOrder.findUnique.mockResolvedValue(null);
-      await expect(service.create('order-1', { type: 'break-fix' }, mockUser)).rejects.toThrow(NotFoundException);
+      await expect(service.create('order-1', { type: 'break_fix' }, mockUser)).rejects.toThrow(NotFoundException);
     });
 
     it('throws NotFoundException when order belongs to a different engineer', async () => {
       mockPrisma.serviceOrder.findUnique.mockResolvedValue({ ...mockOrder, assignedToId: 'other-user' });
-      await expect(service.create('order-1', { type: 'break-fix' }, mockUser)).rejects.toThrow(NotFoundException);
+      await expect(service.create('order-1', { type: 'break_fix' }, mockUser)).rejects.toThrow(NotFoundException);
     });
 
     it('creates an activity with open status', async () => {
       mockPrisma.serviceOrder.findUnique.mockResolvedValue(mockOrder);
       mockPrisma.activity.create.mockResolvedValue(mockActivity);
-      await service.create('order-1', { type: 'break-fix' }, mockUser);
+      await service.create('order-1', { type: 'break_fix' }, mockUser);
       expect(mockPrisma.activity.create).toHaveBeenCalledWith(
         expect.objectContaining({ data: expect.objectContaining({ serviceOrderId: 'order-1', status: 'open' }) }),
       );
