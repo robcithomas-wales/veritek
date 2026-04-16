@@ -2,21 +2,21 @@ import {
   CanActivate,
   ExecutionContext,
   Injectable,
-  Logger,
   UnauthorizedException,
   ForbiddenException,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import { jwtVerify } from 'jose';
-import { createSecretKey } from 'crypto';
+import { jwtVerify, createRemoteJWKSet } from 'jose';
 import { PrismaService } from '../../prisma/prisma.service';
 import { ROLES_KEY } from '../decorators/roles.decorator';
 import type { UserRole } from '@prisma/client';
 
+const JWKS = createRemoteJWKSet(
+  new URL(`${process.env.SUPABASE_URL}/auth/v1/.well-known/jwks.json`),
+);
+
 @Injectable()
 export class JwtAuthGuard implements CanActivate {
-  private readonly logger = new Logger(JwtAuthGuard.name);
-
   constructor(
     private readonly prisma: PrismaService,
     private readonly reflector: Reflector,
@@ -29,16 +29,12 @@ export class JwtAuthGuard implements CanActivate {
       throw new UnauthorizedException('Missing or malformed token');
     }
     const token = authHeader.slice(7);
-    const secret = process.env.SUPABASE_JWT_SECRET;
-    if (!secret) throw new UnauthorizedException('JWT secret not configured');
 
     let payload: { sub?: string; email?: string };
     try {
-      const key = createSecretKey(Buffer.from(secret, 'base64'));
-      const { payload: p } = await jwtVerify(token, key);
+      const { payload: p } = await jwtVerify(token, JWKS);
       payload = p as typeof payload;
-    } catch (err) {
-      this.logger.error('JWT verify failed', String(err));
+    } catch {
       throw new UnauthorizedException('Invalid or expired token');
     }
 
