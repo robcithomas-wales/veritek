@@ -34,12 +34,18 @@
       ],
       [
         "expo-camera",
-        { "cameraPermission": "Allow Veritek to access your camera for photo attachments." }
+        {
+          "cameraPermission": "Allow Veritek to access your camera for photo attachments."
+        }
       ],
       [
         "expo-location",
-        { "locationWhenInUsePermission": "Allow Veritek to access your location for travel tracking." }
-      ]
+        {
+          "locationWhenInUsePermission": "Allow Veritek to access your location for travel tracking."
+        }
+      ],
+      "expo-font",
+      "expo-sqlite"
     ],
     "scheme": "veritek",
     "experiments": {

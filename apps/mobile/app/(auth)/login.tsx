@@ -4,6 +4,7 @@ import {
   StyleSheet, KeyboardAvoidingView, Platform, ActivityIndicator,
 } from 'react-native';
 import { supabase } from '../../lib/supabase';
+import Logo from '../../assets/Logo.svg';
 
 export default function LoginScreen() {
   const [email, setEmail] = useState('');
@@ -26,7 +27,7 @@ export default function LoginScreen() {
       behavior={Platform.OS === "ios" ? "padding" : "height"}
     >
       <View style={styles.inner}>
-        <Text style={styles.logo}>Veritek</Text>
+        <Logo width={200} height={72} style={styles.logo} />
         <Text style={styles.subtitle}>Field Service</Text>
         <TextInput
           style={styles.input}
@@ -63,7 +64,7 @@ export default function LoginScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#1d4ed8" },
   inner: { flex: 1, justifyContent: "center", padding: 32 },
-  logo: { fontSize: 36, fontWeight: "800", color: "#fff", textAlign: "center" },
+  logo: { alignSelf: "center", marginBottom: 4 },
   subtitle: { fontSize: 16, color: "#bfdbfe", textAlign: "center", marginBottom: 40 },
   input: { backgroundColor: "#fff", borderRadius: 10, padding: 14, fontSize: 16, marginBottom: 12 },
   button: { backgroundColor: "#1e3a8a", borderRadius: 10, padding: 16, alignItems: "center", marginTop: 8 },
