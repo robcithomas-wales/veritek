@@ -301,7 +301,7 @@ Created `apps/worker/` as a standalone NestJS application:
 
 | Action | Status | Who |
 |---|---|---|
-| Run `pnpm --filter @veritek/api db:push` against production database | ⬜ Pending | You (needs `DATABASE_URL`) |
-| Deploy `apps/worker` as a second Railway service pointing at same `DATABASE_URL` | ⬜ Pending | You (Railway dashboard) |
+| Run `pnpm --filter @veritek/api db:push` against production database | ✅ Done — schema already in sync | — |
+| Deploy `apps/worker` as a second Railway service pointing at same `DATABASE_URL` | ✅ Done — running on Railway, webhook delivery polling every 30s | — |
 | Add `APNS_KEY_ID`, `APNS_TEAM_ID`, `APNS_PRIVATE_KEY` to Railway API service env vars | ⬜ Blocked — credentials not available | You |
 | Add `FCM_SERVER_KEY` to Railway API service env vars | ⬜ Blocked — credentials not available | You |
