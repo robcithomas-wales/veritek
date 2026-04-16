@@ -52,7 +52,15 @@ Registered in `app.module.ts`.
 
 ---
 
-### P2-005 — Mobile: My Time screen
+### P2-005 — API: tests for private-activities service
+**Layer:** `apps/api`
+**Status:** ✅ Done
+
+`private-activities.service.spec.ts` covers all four methods: create (happy path + event emission), list (pagination + date filters), complete (not found, forbidden, happy path + event), remove (not found, forbidden, happy path).
+
+---
+
+### P2-006 — Mobile: My Time screen
 **Layer:** `apps/mobile`
 **Status:** ✅ Done
 
@@ -67,7 +75,7 @@ Registered in `app.module.ts`.
 
 ## Epic 2 — Inventory (Van Stock tab)
 
-### P2-006 — Types: inventory types
+### P2-007 — Types: inventory types
 **Layer:** `packages/types`
 **Status:** ✅ Done
 
@@ -79,7 +87,7 @@ Added to `packages/types/src/index.ts`:
 
 ---
 
-### P2-007 — Validators: inventory schemas
+### P2-008 — Validators: inventory schemas
 **Layer:** `packages/validators`
 **Status:** ✅ Done
 
@@ -90,7 +98,7 @@ Added to `packages/validators/src/index.ts`:
 
 ---
 
-### P2-008 — API: scaffold `inventory` module
+### P2-009 — API: scaffold `inventory` module
 **Layer:** `apps/api`
 **Status:** ✅ Done
 
@@ -110,18 +118,26 @@ Registered in `app.module.ts`.
 
 ---
 
-### P2-009 — API: Prisma schema for inventory
+### P2-010 — API: Prisma schema for inventory
 **Layer:** `apps/api`
 **Status:** ✅ Done
 
 `Product` and `StockItem` models already existed. Added:
 - `StockAdjustment` model (`@@map("stock_adjustments")`) with reverse relations on `User` and `Product`
 
-Prisma client regenerated (`pnpm db:generate`). Migration pending against production database.
+Prisma client regenerated. Schema pushed to production via `db:push`.
 
 ---
 
-### P2-010 — Mobile: Van Stock screen
+### P2-011 — API: tests for inventory service
+**Layer:** `apps/api`
+**Status:** ✅ Done
+
+`inventory.service.spec.ts` covers: vanStock, search (no filter + warehouseId filter), adjust (not found, negative stock guard, happy path), transfer (not found, insufficient stock, missing target engineer, happy path transaction), warehouses.
+
+---
+
+### P2-012 — Mobile: Van Stock screen
 **Layer:** `apps/mobile`
 **Status:** ✅ Done
 
@@ -136,7 +152,7 @@ Prisma client regenerated (`pnpm db:generate`). Migration pending against produc
 
 ## Epic 3 — Shipping (Parts Returns tab)
 
-### P2-011 — Types: shipping types
+### P2-013 — Types: shipping types
 **Layer:** `packages/types`
 **Status:** ✅ Done
 
@@ -148,7 +164,7 @@ Updated existing `Shipment` interface to add `type: ShippingRequestType` and `st
 
 ---
 
-### P2-012 — Validators: shipping schemas
+### P2-014 — Validators: shipping schemas
 **Layer:** `packages/validators`
 **Status:** ✅ Done
 
@@ -159,7 +175,7 @@ Added to `packages/validators/src/index.ts`:
 
 ---
 
-### P2-013 — API: scaffold `shipping` module
+### P2-015 — API: scaffold `shipping` module
 **Layer:** `apps/api`
 **Status:** ✅ Done
 
@@ -179,20 +195,28 @@ Registered in `app.module.ts`.
 
 ---
 
-### P2-014 — API: Prisma schema for shipping
+### P2-016 — API: Prisma schema for shipping
 **Layer:** `apps/api`
 **Status:** ✅ Done
 
 `Shipment` and `ShipLine` models already existed. Added:
-- `type ShipmentType` enum (`return`, `on_site_collection`)
-- `status ShipmentStatus` enum (`pending`, `collected`, `cancelled`)
+- `ShipmentType` enum (`return`, `on_site_collection`)
+- `ShipmentStatus` enum (`pending`, `collected`, `cancelled`)
 - `type` and `status` fields added to `Shipment` model with defaults
 
-Prisma client regenerated. Migration pending against production database.
+Prisma client regenerated. Schema pushed to production via `db:push`.
 
 ---
 
-### P2-015 — Mobile: Shipping screen
+### P2-017 — API: tests for shipping service
+**Layer:** `apps/api`
+**Status:** ✅ Done
+
+`shipping.service.spec.ts` covers: create, list (scoped to user), get (not found, forbidden, happy path), updateStatus (not found, forbidden, already-collected, already-cancelled, pending→collected), removeLine (not found, forbidden, non-pending guard, line-not-found, happy path).
+
+---
+
+### P2-018 — Mobile: Shipping screen
 **Layer:** `apps/mobile`
 **Status:** ✅ Done
 
@@ -207,7 +231,7 @@ Prisma client regenerated. Migration pending against production database.
 
 ## Epic 4 — Supabase Realtime (live job assignments)
 
-### P2-016 — Mobile: Realtime subscription for job.assigned
+### P2-019 — Mobile: Realtime subscription for job.assigned
 **Layer:** `apps/mobile`
 **Status:** ✅ Done
 
@@ -223,22 +247,20 @@ Prisma client regenerated. Migration pending against production database.
 
 Requires Railway env vars before real delivery works: `APNS_KEY_ID`, `APNS_TEAM_ID`, `APNS_PRIVATE_KEY`, `FCM_SERVER_KEY`.
 
-### P2-017 — API: scaffold `notifications` module
+### P2-020 — API: scaffold `notifications` module
 **Layer:** `apps/api`
 **Status:** ✅ Done
 
 Created `apps/api/src/notifications/`:
 - `notifications.module.ts`
 - `notifications.controller.ts` — `POST /notifications/register`
-- `notifications.service.ts` — upserts device token; subscribes to `job.assigned` via `@OnEvent` decorator; `sendToUser(userId, title, body, data?)` dispatches per platform
-
-APNs and FCM delivery stubs in place — actual HTTP/2 calls to APNs/FCM are wired in the worker service once env vars are provisioned.
+- `notifications.service.ts` — upserts device token; subscribes to `job.assigned` via `@OnEvent` decorator; `sendToUser(userId, title, body, data?)` dispatches per platform; real APNs (via `apn` package) and FCM (via `firebase-admin`) calls in place; gracefully degrades if env vars not set.
 
 Registered in `app.module.ts`.
 
 ---
 
-### P2-018 — API: Prisma schema for device tokens
+### P2-021 — API: Prisma schema for device tokens
 **Layer:** `apps/api`
 **Status:** ✅ Done
 
@@ -247,25 +269,23 @@ Added `DeviceToken` model (`@@map("device_tokens")`):
 - `platform String` — `'ios'` or `'android'`
 - Reverse relation added to `User`
 
-Prisma client regenerated. Migration pending against production database.
+Prisma client regenerated. Schema pushed to production via `db:push`.
 
 ---
 
-### P2-019 — Worker service: scaffold separate Railway service
+### P2-022 — Worker service: scaffold separate Railway service
 **Layer:** `apps/worker`
 **Status:** ✅ Done
 
 Created `apps/worker/` as a standalone NestJS application:
 - `src/main.ts`, `src/app.module.ts`
-- `src/prisma/` — own PrismaService pointing at shared schema (`../api/prisma/schema.prisma`)
+- `src/prisma/` — own PrismaService pointing at shared Prisma schema
 - `src/webhook-delivery/webhook-delivery.service.ts` — `@Cron(EVERY_30_SECONDS)` polls `webhook_deliveries` WHERE `status = 'pending' AND nextRetryAt <= now()`; signs payload with HMAC-SHA256; applies retry schedule: 30s → 2min → 10min → 1h → 4h → `dead` after 5 attempts
 - Uses `@nestjs/schedule` (`ScheduleModule.forRoot()`)
 
-Deploy as a separate Railway service with the same `DATABASE_URL`.
-
 ---
 
-### P2-020 — Mobile: register push token on login
+### P2-023 — Mobile: register push token on login
 **Layer:** `apps/mobile`
 **Status:** ✅ Done
 
@@ -277,12 +297,11 @@ Deploy as a separate Railway service with the same `DATABASE_URL`.
 
 ---
 
-## Remaining before deploying Phase 2
+## Remaining before Phase 2 is fully live
 
-| Action | Who |
-|---|---|
-| Run `pnpm db:migrate` against production database | DevOps / you |
-| Add `APNS_KEY_ID`, `APNS_TEAM_ID`, `APNS_PRIVATE_KEY` env vars to Railway API service | DevOps / you |
-| Add `FCM_SERVER_KEY` env var to Railway API service | DevOps / you |
-| Deploy `apps/worker` as a second Railway service pointing at same `DATABASE_URL` | DevOps / you |
-| Wire real APNs/FCM HTTP calls in `notifications.service.ts` (stubs in place) | Engineering |
+| Action | Status | Who |
+|---|---|---|
+| Run `pnpm --filter @veritek/api db:push` against production database | ⬜ Pending | You (needs `DATABASE_URL`) |
+| Deploy `apps/worker` as a second Railway service pointing at same `DATABASE_URL` | ⬜ Pending | You (Railway dashboard) |
+| Add `APNS_KEY_ID`, `APNS_TEAM_ID`, `APNS_PRIVATE_KEY` to Railway API service env vars | ⬜ Blocked — credentials not available | You |
+| Add `FCM_SERVER_KEY` to Railway API service env vars | ⬜ Blocked — credentials not available | You |
