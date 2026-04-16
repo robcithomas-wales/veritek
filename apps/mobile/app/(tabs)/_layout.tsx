@@ -1,6 +1,7 @@
 import { Tabs } from 'expo-router';
 import { useRouter } from 'expo-router';
 import { TouchableOpacity, Text, View, StyleSheet } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { useClockToday } from '../../hooks/use-clock';
 import { supabase } from '../../lib/supabase';
 import Logo from '../../components/Logo';
@@ -38,10 +39,34 @@ export default function TabsLayout() {
         ),
       }}
     >
-      <Tabs.Screen name="index" options={{ title: 'Work List' }} />
-      <Tabs.Screen name="inventory" options={{ title: 'Inventory' }} />
-      <Tabs.Screen name="private-activity" options={{ title: 'My Time' }} />
-      <Tabs.Screen name="shipping" options={{ title: 'Shipping' }} />
+      <Tabs.Screen
+        name="index"
+        options={{
+          title: 'Work List',
+          tabBarIcon: ({ color, size }) => <Ionicons name="clipboard-outline" size={size} color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="inventory"
+        options={{
+          title: 'Inventory',
+          tabBarIcon: ({ color, size }) => <Ionicons name="cube-outline" size={size} color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="private-activity"
+        options={{
+          title: 'My Time',
+          tabBarIcon: ({ color, size }) => <Ionicons name="time-outline" size={size} color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="shipping"
+        options={{
+          title: 'Shipping',
+          tabBarIcon: ({ color, size }) => <Ionicons name="car-outline" size={size} color={color} />,
+        }}
+      />
     </Tabs>
   );
 }
