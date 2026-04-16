@@ -92,7 +92,7 @@ export class WebhookDeliveryService {
       return;
     }
 
-    const delay = RETRY_DELAYS[newAttempts - 1] ?? RETRY_DELAYS[RETRY_DELAYS.length - 1];
+    const delay = RETRY_DELAYS[newAttempts - 1] ?? RETRY_DELAYS[RETRY_DELAYS.length - 1] ?? 14_400_000;
     const nextRetryAt = new Date(Date.now() + delay);
 
     await this.prisma.webhookDelivery.update({
