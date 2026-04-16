@@ -1,13 +1,11 @@
 import { useState } from 'react';
-import { View, Text, TextInput, FlatList, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, TextInput, FlatList, StyleSheet } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
-import { useRouter } from 'expo-router';
 import { api } from '../lib/api';
 import { qk } from '../lib/query-client';
 import { ServiceOrderCard } from '../components/service-order-card';
 
 export default function HistoryScreen() {
-  const router = useRouter();
   const [query, setQuery] = useState('');
   const [debouncedQuery, setDebouncedQuery] = useState('');
 
@@ -22,9 +20,6 @@ export default function HistoryScreen() {
   return (
     <View style={styles.container}>
       <View style={styles.searchBar}>
-        <TouchableOpacity onPress={() => router.back()}>
-          <Text style={styles.back}>← Back</Text>
-        </TouchableOpacity>
         <TextInput
           style={styles.input}
           placeholder="Search by reference, site..."
@@ -54,8 +49,7 @@ export default function HistoryScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#f9fafb' },
-  searchBar: { backgroundColor: '#fff', padding: 16, borderBottomWidth: 1, borderBottomColor: '#e5e7eb', gap: 8 },
-  back: { color: '#1d4ed8', fontSize: 14, marginBottom: 8 },
+  searchBar: { backgroundColor: '#fff', padding: 16, borderBottomWidth: 1, borderBottomColor: '#e5e7eb' },
   input: { backgroundColor: '#f3f4f6', borderRadius: 8, padding: 10, fontSize: 15 },
   list: { paddingVertical: 8 },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center', paddingTop: 60 },

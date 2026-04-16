@@ -58,7 +58,7 @@ export default function RootLayout() {
           <Stack.Screen name="(tabs)" />
           <Stack.Screen name="service-order/[id]" />
           <Stack.Screen name="clock" options={{ presentation: 'modal' }} />
-          <Stack.Screen name="history" />
+          <Stack.Screen name="history" options={{ headerShown: true, title: 'History', headerBackTitle: 'Back' }} />
         </Stack>
         <StatusBar style="dark" />
       </AuthGate>
