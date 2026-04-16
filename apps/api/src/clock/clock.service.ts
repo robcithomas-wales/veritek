@@ -18,10 +18,10 @@ export class ClockService {
       orderBy: { timestamp: 'desc' },
     });
 
-    if (dto.type === 'clock-in' && last?.type === 'clock_in') {
+    if (dto.type === 'clock_in' && last?.type === 'clock_in') {
       throw new BadRequestException('Already clocked in');
     }
-    if (dto.type === 'clock-out' && (!last || last.type === 'clock_out')) {
+    if (dto.type === 'clock_out' && (!last || last.type === 'clock_out')) {
       throw new BadRequestException('Not currently clocked in');
     }
 
@@ -33,7 +33,7 @@ export class ClockService {
       },
     });
 
-    this.events.emit(dto.type === 'clock-in' ? 'clock.in' : 'clock.out', {
+    this.events.emit(dto.type === 'clock_in' ? 'clock.in' : 'clock.out', {
       userId: user.id,
       timestamp: dto.timestamp,
     });

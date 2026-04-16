@@ -16,7 +16,7 @@ export default function ClockModal() {
   const isClockedIn = lastEvent?.type === 'clock_in';
 
   async function handleClock() {
-    const type = isClockedIn ? 'clock-out' : 'clock-in';
+    const type = isClockedIn ? 'clock_out' : 'clock_in';
     const label = isClockedIn ? 'Clock Out' : 'Clock In';
     Alert.alert(label, `Confirm ${label.toLowerCase()}?`, [
       {

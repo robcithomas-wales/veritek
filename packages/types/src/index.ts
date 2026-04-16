@@ -5,14 +5,14 @@ export type UserRole = 'engineer' | 'dispatcher' | 'admin';
 export type ServiceOrderStatus =
   | 'received'
   | 'accepted'
-  | 'in-route'
-  | 'in-progress'
+  | 'in_route'
+  | 'in_progress'
   | 'completed'
   | 'closed';
 
 export type ActivityType =
-  | 'break-fix'
-  | 'preventive-maintenance'
+  | 'break_fix'
+  | 'preventive_maintenance'
   | 'installation'
   | 'other';
 
@@ -21,12 +21,12 @@ export type ActivityStatus = 'open' | 'travel' | 'work' | 'complete';
 export type MaterialStatus =
   | 'needed'
   | 'allocated'
-  | 'back-ordered'
+  | 'back_ordered'
   | 'fulfilled'
-  | 'not-used'
+  | 'not_used'
   | 'cancelled';
 
-export type MaterialDisposition = 'open' | 'fulfilled' | 'not-used' | 'doa';
+export type MaterialDisposition = 'open' | 'fulfilled' | 'not_used' | 'doa';
 
 export type PrivateActivityType =
   | 'travel'
@@ -35,7 +35,7 @@ export type PrivateActivityType =
   | 'absence'
   | 'other';
 
-export type ClockEventType = 'clock-in' | 'clock-out';
+export type ClockEventType = 'clock_in' | 'clock_out';
 
 export type WebhookDeliveryStatus = 'pending' | 'delivered' | 'failed' | 'dead';
 

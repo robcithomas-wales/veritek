@@ -11,7 +11,8 @@
       "Bash(pnpm --filter @veritek/api add -D @nestjs/testing@^10.0.0)",
       "Bash(chmod +x /Users/clubspark/veritek/.githooks/pre-push)",
       "Bash(git -C /Users/clubspark/veritek config core.hooksPath .githooks)",
-      "Bash(pnpm --filter @veritek/api test)"
+      "Bash(pnpm --filter @veritek/api test)",
+      "Bash(pnpm --filter @veritek/validators build)"
     ]
   }
 }

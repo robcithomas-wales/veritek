@@ -11,7 +11,7 @@ const STATUS_LABEL: Record<string, string> = {
   open: 'Open', travel: 'Travelling', work: 'Working', complete: 'Complete',
 };
 const TYPE_LABEL: Record<string, string> = {
-  'break-fix': 'Break Fix', 'preventive-maintenance': 'PM', installation: 'Install', other: 'Other',
+  break_fix: 'Break Fix', preventive_maintenance: 'PM', installation: 'Install', other: 'Other',
 };
 
 export default function ActivitiesScreen() {
@@ -49,8 +49,8 @@ export default function ActivitiesScreen() {
           style={styles.addButton}
           onPress={() => {
             Alert.alert('Create Activity', 'Select type', [
-              { text: 'Break Fix', onPress: () => doAction(`/service-orders/${id}/activities`, 'POST', { type: 'break-fix' }) },
-              { text: 'Preventive Maintenance', onPress: () => doAction(`/service-orders/${id}/activities`, 'POST', { type: 'preventive-maintenance' }) },
+              { text: 'Break Fix', onPress: () => doAction(`/service-orders/${id}/activities`, 'POST', { type: 'break_fix' }) },
+              { text: 'Preventive Maintenance', onPress: () => doAction(`/service-orders/${id}/activities`, 'POST', { type: 'preventive_maintenance' }) },
               { text: 'Installation', onPress: () => doAction(`/service-orders/${id}/activities`, 'POST', { type: 'installation' }) },
               { text: 'Cancel', style: 'cancel' },
             ]);

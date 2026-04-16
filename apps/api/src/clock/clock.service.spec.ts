@@ -64,49 +64,49 @@ describe('ClockService', () => {
   describe('record', () => {
     it('throws BadRequestException when clocking in while already clocked in', async () => {
       mockPrisma.clockEvent.findFirst.mockResolvedValue(mockClockIn);
-      await expect(service.record({ type: 'clock-in', timestamp }, mockUser)).rejects.toThrow(BadRequestException);
+      await expect(service.record({ type: 'clock_in', timestamp }, mockUser)).rejects.toThrow(BadRequestException);
     });
 
     it('throws BadRequestException when clocking out with no previous event', async () => {
       mockPrisma.clockEvent.findFirst.mockResolvedValue(null);
-      await expect(service.record({ type: 'clock-out', timestamp }, mockUser)).rejects.toThrow(BadRequestException);
+      await expect(service.record({ type: 'clock_out', timestamp }, mockUser)).rejects.toThrow(BadRequestException);
     });
 
     it('throws BadRequestException when clocking out while already clocked out', async () => {
       mockPrisma.clockEvent.findFirst.mockResolvedValue(mockClockOut);
-      await expect(service.record({ type: 'clock-out', timestamp }, mockUser)).rejects.toThrow(BadRequestException);
+      await expect(service.record({ type: 'clock_out', timestamp }, mockUser)).rejects.toThrow(BadRequestException);
     });
 
-    it('creates a clock-in event when not currently clocked in', async () => {
+    it('creates a clock_in event when not currently clocked in', async () => {
       mockPrisma.clockEvent.findFirst.mockResolvedValue(null);
       mockPrisma.clockEvent.create.mockResolvedValue(mockClockIn);
-      await service.record({ type: 'clock-in', timestamp }, mockUser);
+      await service.record({ type: 'clock_in', timestamp }, mockUser);
       expect(mockPrisma.clockEvent.create).toHaveBeenCalledWith(
         expect.objectContaining({ data: expect.objectContaining({ userId: 'user-1' }) }),
       );
     });
 
-    it('creates a clock-out event when currently clocked in', async () => {
+    it('creates a clock_out event when currently clocked in', async () => {
       mockPrisma.clockEvent.findFirst.mockResolvedValue(mockClockIn);
       mockPrisma.clockEvent.create.mockResolvedValue(mockClockOut);
-      await service.record({ type: 'clock-out', timestamp }, mockUser);
+      await service.record({ type: 'clock_out', timestamp }, mockUser);
       expect(mockPrisma.clockEvent.create).toHaveBeenCalled();
     });
 
-    it('emits clock.in event on clock-in', async () => {
+    it('emits clock.in event on clock_in', async () => {
       mockPrisma.clockEvent.findFirst.mockResolvedValue(null);
       mockPrisma.clockEvent.create.mockResolvedValue(mockClockIn);
-      await service.record({ type: 'clock-in', timestamp }, mockUser);
+      await service.record({ type: 'clock_in', timestamp }, mockUser);
       expect(mockEvents.emit).toHaveBeenCalledWith(
         'clock.in',
         expect.objectContaining({ userId: 'user-1' }),
       );
     });
 
-    it('emits clock.out event on clock-out', async () => {
+    it('emits clock.out event on clock_out', async () => {
       mockPrisma.clockEvent.findFirst.mockResolvedValue(mockClockIn);
       mockPrisma.clockEvent.create.mockResolvedValue(mockClockOut);
-      await service.record({ type: 'clock-out', timestamp }, mockUser);
+      await service.record({ type: 'clock_out', timestamp }, mockUser);
       expect(mockEvents.emit).toHaveBeenCalledWith(
         'clock.out',
         expect.objectContaining({ userId: 'user-1' }),

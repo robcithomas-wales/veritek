@@ -72,8 +72,8 @@ describe('SyncService', () => {
   describe('flush routing', () => {
     it('routes POST /service-orders/:id/activities to activities.create', async () => {
       mockActivities.create.mockResolvedValue({});
-      await service.flush({ mutations: [mutation('/service-orders/order-1/activities', 'POST', { type: 'break-fix' })] }, mockUser);
-      expect(mockActivities.create).toHaveBeenCalledWith('order-1', { type: 'break-fix' }, mockUser);
+      await service.flush({ mutations: [mutation('/service-orders/order-1/activities', 'POST', { type: 'break_fix' })] }, mockUser);
+      expect(mockActivities.create).toHaveBeenCalledWith('order-1', { type: 'break_fix' }, mockUser);
     });
 
     it('routes PATCH /activities/:id/start-travel to activities.startTravel', async () => {
@@ -123,8 +123,8 @@ describe('SyncService', () => {
     it('routes POST /clock to clock.record', async () => {
       mockClock.record.mockResolvedValue({});
       const ts = '2026-04-15T08:00:00.000Z';
-      await service.flush({ mutations: [mutation('/clock', 'POST', { type: 'clock-in', timestamp: ts })] }, mockUser);
-      expect(mockClock.record).toHaveBeenCalledWith({ type: 'clock-in', timestamp: ts }, mockUser);
+      await service.flush({ mutations: [mutation('/clock', 'POST', { type: 'clock_in', timestamp: ts })] }, mockUser);
+      expect(mockClock.record).toHaveBeenCalledWith({ type: 'clock_in', timestamp: ts }, mockUser);
     });
   });
 

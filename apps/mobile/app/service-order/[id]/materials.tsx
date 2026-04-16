@@ -3,8 +3,8 @@ import { useLocalSearchParams } from 'expo-router';
 import { useMaterials } from '../../../hooks/use-service-order';
 
 const STATUS_COLORS: Record<string, string> = {
-  needed: '#ca8a04', allocated: '#2563eb', 'back-ordered': '#dc2626',
-  fulfilled: '#16a34a', 'not-used': '#6b7280', cancelled: '#374151',
+  needed: '#ca8a04', allocated: '#2563eb', back_ordered: '#dc2626',
+  fulfilled: '#16a34a', not_used: '#6b7280', cancelled: '#374151',
 };
 
 export default function MaterialsScreen() {

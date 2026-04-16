@@ -8,7 +8,7 @@ export const RejectServiceOrderSchema = z.object({
 
 export const ServiceOrderHistoryQuerySchema = z.object({
   query: z.string().optional(),
-  status: z.enum(['received','accepted','in-route','in-progress','completed','closed']).optional(),
+  status: z.enum(['received','accepted','in_route','in_progress','completed','closed']).optional(),
   from: z.string().datetime().optional(),
   to: z.string().datetime().optional(),
   page: z.coerce.number().int().positive().default(1),
@@ -18,7 +18,7 @@ export const ServiceOrderHistoryQuerySchema = z.object({
 // ─── Activities ───────────────────────────────────────────────────────────────
 
 export const CreateActivitySchema = z.object({
-  type: z.enum(['break-fix', 'preventive-maintenance', 'installation', 'other']),
+  type: z.enum(['break_fix', 'preventive_maintenance', 'installation', 'other']),
 });
 
 export const StartWorkSchema = z.object({
@@ -48,8 +48,8 @@ export const CreateMaterialSchema = z.object({
 });
 
 export const UpdateMaterialSchema = z.object({
-  status: z.enum(['needed','allocated','back-ordered','fulfilled','not-used','cancelled']).optional(),
-  disposition: z.enum(['open','fulfilled','not-used','doa']).optional(),
+  status: z.enum(['needed','allocated','back_ordered','fulfilled','not_used','cancelled']).optional(),
+  disposition: z.enum(['open','fulfilled','not_used','doa']).optional(),
   serialNumber: z.string().optional(),
   returnReason: z.string().optional(),
   returnWarehouseId: z.string().cuid().optional(),
@@ -58,7 +58,7 @@ export const UpdateMaterialSchema = z.object({
 // ─── Clock ────────────────────────────────────────────────────────────────────
 
 export const ClockEventSchema = z.object({
-  type: z.enum(['clock-in', 'clock-out']),
+  type: z.enum(['clock_in', 'clock_out']),
   timestamp: z.string().datetime(),
 });
 
