@@ -4,7 +4,7 @@ import {
   StyleSheet, KeyboardAvoidingView, Platform, ActivityIndicator,
 } from 'react-native';
 import { supabase } from '../../lib/supabase';
-import Logo from '../../assets/Logo.svg';
+import Logo from '../../components/Logo';
 
 export default function LoginScreen() {
   const [email, setEmail] = useState('');

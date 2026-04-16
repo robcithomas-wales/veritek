@@ -3,7 +3,7 @@ import { useRouter } from 'expo-router';
 import { TouchableOpacity, Text, View, StyleSheet } from 'react-native';
 import { useClockToday } from '../../hooks/use-clock';
 import { supabase } from '../../lib/supabase';
-import Logo from '../../assets/Logo.svg';
+import Logo from '../../components/Logo';
 
 export default function TabsLayout() {
   const router = useRouter();
