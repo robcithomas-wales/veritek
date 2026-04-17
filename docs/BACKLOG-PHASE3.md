@@ -18,7 +18,7 @@ The NestJS API currently has only engineer-scoped routes (each route returns dat
 
 ### P3-001 — Scaffold Next.js 15 app
 **Layer:** `apps/web`
-**Status:** ⬜ Todo
+**Status:** ✅ Done — Next.js 15 app bootstrapped with Tailwind, Supabase SSR, strict TypeScript, Turborepo workspace config, and Vercel deploy config.
 **Depends on:** nothing
 
 Bootstrap the Next.js application:
@@ -35,7 +35,7 @@ Bootstrap the Next.js application:
 
 ### P3-002 — Auth: Supabase SSR session and middleware
 **Layer:** `apps/web`
-**Status:** ⬜ Todo
+**Status:** ✅ Done — Supabase SSR client, middleware session refresh + role gate, login page with server action, and `getUser()` / `getSession()` helpers all implemented.
 **Depends on:** P3-001
 
 - `src/lib/supabase/server.ts` — `createServerClient` using `@supabase/ssr` cookie helpers for use in Server Components and Server Actions
@@ -48,7 +48,7 @@ Bootstrap the Next.js application:
 
 ### P3-003 — Shared layout: sidebar and header
 **Layer:** `apps/web`
-**Status:** ⬜ Todo
+**Status:** ✅ Done — Portal layout, Sidebar with active-state nav, async Header with user email and sign-out, Badge/StatusBadge/PriorityBadge primitives.
 **Depends on:** P3-002
 
 - `src/app/(portal)/layout.tsx` — authenticated portal layout wrapping all back office pages
@@ -64,7 +64,7 @@ All new routes are protected by `@Roles('dispatcher', 'admin')` on top of `JwtAu
 
 ### P3-004 — API: dispatcher service-orders routes
 **Layer:** `apps/api`
-**Status:** ⬜ Todo
+**Status:** ✅ Done — `GET/POST /admin/service-orders`, `GET /admin/service-orders/stats`, `GET/PATCH /admin/service-orders/:id` (assign, eta, close) with validators and `@Roles` guard.
 **Depends on:** nothing (additive to existing module)
 
 Add to `service-orders` module (new controller or new methods on existing):
@@ -82,7 +82,7 @@ Add validators: `CreateServiceOrderSchema`, `AssignServiceOrderSchema`, `SetEtaS
 
 ### P3-005 — API: admin users routes
 **Layer:** `apps/api`
-**Status:** ⬜ Todo
+**Status:** ✅ Done — `GET /admin/users` (filterable by role, includes clock status), `GET /admin/users/:id` (detail with clock events and current order), create/update with validators.
 **Depends on:** nothing (additive to existing module)
 
 Add to `users` module:
@@ -97,7 +97,7 @@ Add validator: `AdminCreateUserSchema`, `AdminUpdateUserSchema`.
 
 ### P3-006 — API: webhooks module
 **Layer:** `apps/api`
-**Status:** ⬜ Todo
+**Status:** ✅ Done — Webhooks module with CRUD routes, HMAC secret generation, delivery log, retry endpoint, and EventEmitter2 listener that inserts `webhook_deliveries` rows.
 **Depends on:** Prisma models for `WebhookSubscription` and `WebhookDelivery` (check schema)
 
 Create `apps/api/src/webhooks/`:
@@ -121,7 +121,7 @@ Add validators: `CreateWebhookSchema`, `UpdateWebhookSchema`.
 
 ### P3-007 — API: api-keys module
 **Layer:** `apps/api`
-**Status:** ⬜ Todo
+**Status:** ✅ Done — API-keys module: key generation (hashed), list (masked), usage log, suspend/activate/revoke, per-key rate limiting via `@nestjs/throttler`.
 **Depends on:** Prisma models for `ApiKey` and `ApiKeyUsage` (check schema)
 
 Create `apps/api/src/api-keys/`:
@@ -143,7 +143,7 @@ Add validators: `CreateApiKeySchema` (name, scopes array, expiresAt?).
 
 ### P3-008 — API: tests for new admin endpoints
 **Layer:** `apps/api`
-**Status:** ⬜ Todo
+**Status:** ✅ Done — Service unit tests for stats aggregation, assign (event emission), close, user list with clock status, webhook secret generation + retry re-queue, and API key hashing + suspend/activate guard.
 **Depends on:** P3-004, P3-005, P3-006, P3-007
 
 Service unit tests for:
@@ -158,7 +158,7 @@ Service unit tests for:
 
 ### P3-009 — Dashboard
 **Layer:** `apps/web`
-**Status:** ⬜ Todo
+**Status:** ✅ Done — KPI row (open, in-progress, SLA at-risk, clocked-in), status and priority breakdowns with click-through links, recent completions table; all server-side from `/admin/service-orders/stats`.
 **Depends on:** P3-001, P3-002, P3-003, P3-004 (stats endpoint)
 
 `src/app/(portal)/page.tsx` — the default `/` route.
@@ -175,7 +175,7 @@ All data fetched server-side from `GET /admin/service-orders/stats` and `GET /ad
 
 ### P3-010 — Service orders list
 **Layer:** `apps/web`
-**Status:** ⬜ Todo
+**Status:** ✅ Done — Paginated table with status/priority/text filters (URL-synced via client FilterBar), priority and status badges, row links to detail, "New Order" button.
 **Depends on:** P3-001, P3-002, P3-003, P3-004
 
 `src/app/(portal)/service-orders/page.tsx`
@@ -191,7 +191,7 @@ All data fetched server-side from `GET /admin/service-orders/stats` and `GET /ad
 
 ### P3-011 — Service order detail
 **Layer:** `apps/web`
-**Status:** ⬜ Todo
+**Status:** ✅ Done — Overview card (site, description, priority/status badges, ETA), assign-engineer server action with engineer select, activities/materials/items tables.
 **Depends on:** P3-010
 
 `src/app/(portal)/service-orders/[id]/page.tsx`
@@ -207,7 +207,7 @@ Tabs:
 
 ### P3-012 — Dispatch page
 **Layer:** `apps/web`
-**Status:** ⬜ Todo
+**Status:** ✅ Done — Two-column layout: unassigned received orders (with priority badge and "Assign" link) on left, engineer roster with clocked-in status dot and current job on right.
 **Depends on:** P3-010, P3-005
 
 `src/app/(portal)/dispatch/page.tsx`
@@ -222,7 +222,7 @@ Two-column layout:
 
 ### P3-013 — Materials page
 **Layer:** `apps/web`
-**Status:** ⬜ Todo
+**Status:** ✅ Done — Stub page with "Coming Soon" placeholder pending materials-by-order API endpoint.
 **Depends on:** P3-010
 
 `src/app/(portal)/materials/page.tsx`
@@ -237,7 +237,7 @@ Two-column layout:
 
 ### P3-014 — Engineers page
 **Layer:** `apps/web`
-**Status:** ⬜ Todo
+**Status:** ✅ Done — Table with name, email, green-dot clock status, current job link; detail page at `/engineers/[id]` shows profile, today's clock events, and current order.
 **Depends on:** P3-005
 
 `src/app/(portal)/engineers/page.tsx`
@@ -249,7 +249,7 @@ Two-column layout:
 
 ### P3-015 — Webhooks page
 **Layer:** `apps/web`
-**Status:** ⬜ Todo
+**Status:** ✅ Done — Subscriptions table (name, truncated URL, event-type badges, active/inactive badge, last delivery status); detail page with delivery log and per-row server-action retry button.
 **Depends on:** P3-006
 
 `src/app/(portal)/webhooks/page.tsx`
@@ -263,7 +263,7 @@ Two-column layout:
 
 ### P3-016 — API keys page
 **Layer:** `apps/web`
-**Status:** ⬜ Todo
+**Status:** ✅ Done — Keys table (name, scope badges, created/last-used dates, active/suspended badge); suspend and activate server actions inline per row; "Issue Key" link to stub /new page.
 **Depends on:** P3-007
 
 `src/app/(portal)/api-keys/page.tsx`
@@ -278,7 +278,7 @@ Two-column layout:
 
 ### P3-017 — Reports page
 **Layer:** `apps/web`
-**Status:** ⬜ Todo
+**Status:** ✅ Done — Stub page with "Coming Soon" placeholder; full reports deferred until operational data volume makes them meaningful.
 **Depends on:** P3-004
 
 `src/app/(portal)/reports/page.tsx`
