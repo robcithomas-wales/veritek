@@ -19,6 +19,8 @@ import { PrivateActivitiesModule } from './private-activities/private-activities
 import { InventoryModule } from './inventory/inventory.module';
 import { ShippingModule } from './shipping/shipping.module';
 import { NotificationsModule } from './notifications/notifications.module';
+import { WebhooksModule } from './webhooks/webhooks.module';
+import { ApiKeysModule } from './api-keys/api-keys.module';
 import { HealthController } from './health.controller';
 
 @Module({
@@ -43,6 +45,8 @@ import { HealthController } from './health.controller';
     InventoryModule,
     ShippingModule,
     NotificationsModule,
+    WebhooksModule,
+    ApiKeysModule,
   ],
   controllers: [HealthController],
 })
