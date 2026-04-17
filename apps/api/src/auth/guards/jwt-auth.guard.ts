@@ -11,12 +11,12 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { ROLES_KEY } from '../decorators/roles.decorator';
 import type { UserRole } from '@prisma/client';
 
-const JWKS = createRemoteJWKSet(
-  new URL(`${process.env.SUPABASE_URL}/auth/v1/.well-known/jwks.json`),
-);
-
 @Injectable()
 export class JwtAuthGuard implements CanActivate {
+  private readonly jwks = createRemoteJWKSet(
+    new URL(`${process.env.SUPABASE_URL}/auth/v1/.well-known/jwks.json`),
+  );
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly reflector: Reflector,
@@ -32,7 +32,7 @@ export class JwtAuthGuard implements CanActivate {
 
     let payload: { sub?: string; email?: string };
     try {
-      const { payload: p } = await jwtVerify(token, JWKS);
+      const { payload: p } = await jwtVerify(token, this.jwks);
       payload = p as typeof payload;
     } catch {
       throw new UnauthorizedException('Invalid or expired token');
