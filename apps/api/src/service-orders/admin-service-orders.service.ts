@@ -12,7 +12,7 @@ export class AdminServiceOrdersService {
 
   async stats() {
     const slaThreshold = new Date(Date.now() - 4 * 60 * 60 * 1000);
-    const openStatuses = ['received', 'accepted', 'in_route', 'in_progress'] as const;
+    const openStatuses = ['received', 'accepted', 'in_route', 'in_progress'] as any[];
 
     const [orders, clockedIn, recentlyCompleted] = await Promise.all([
       this.prisma.serviceOrder.findMany({
@@ -41,7 +41,7 @@ export class AdminServiceOrdersService {
     for (const o of orders) {
       byStatus[o.status] = (byStatus[o.status] ?? 0) + 1;
       const label = o.priority < 20 ? 'low' : o.priority < 40 ? 'medium' : o.priority < 60 ? 'high' : o.priority < 80 ? 'critical' : 'urgent';
-      byPriority[label]++;
+      byPriority[label] = (byPriority[label] ?? 0) + 1;
       if (o.createdAt < slaThreshold) slaAtRisk++;
     }
 

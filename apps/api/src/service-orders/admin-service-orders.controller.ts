@@ -20,11 +20,17 @@ export class AdminServiceOrdersController {
 
   @Get()
   list(@Query() query: Record<string, string>) {
-    return this.service.list({
-      ...query,
-      page: query['page'] ? Number(query['page']) : undefined,
-      pageSize: query['pageSize'] ? Number(query['pageSize']) : undefined,
-    });
+    const params: Record<string, string | number> = {};
+    if (query['status']) params['status'] = query['status'];
+    if (query['priority']) params['priority'] = query['priority'];
+    if (query['engineerId']) params['engineerId'] = query['engineerId'];
+    if (query['siteId']) params['siteId'] = query['siteId'];
+    if (query['from']) params['from'] = query['from'];
+    if (query['to']) params['to'] = query['to'];
+    if (query['search']) params['search'] = query['search'];
+    if (query['page']) params['page'] = Number(query['page']);
+    if (query['pageSize']) params['pageSize'] = Number(query['pageSize']);
+    return this.service.list(params as any);
   }
 
   @Get(':id')

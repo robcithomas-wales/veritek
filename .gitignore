@@ -45,3 +45,5 @@ web-build/
 
 # Railway / Vercel
 .vercel/
+apps/web/tsconfig.tsbuildinfo
+apps/web/.env.local
