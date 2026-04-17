@@ -4,7 +4,7 @@ import { useRouter } from 'expo-router';
 import { useQueryClient } from '@tanstack/react-query';
 import { useClockToday } from '../hooks/use-clock';
 import { enqueue } from '../lib/mutation-queue/queue';
-import { flushQueue } from '../lib/mutation-queue/sync';
+import { flushQueue, lastSyncError } from '../lib/mutation-queue/sync';
 import { qk } from '../lib/query-client';
 
 export default function ClockModal() {
@@ -25,9 +25,12 @@ export default function ClockModal() {
           setSubmitting(true);
           enqueue('/clock', 'POST', { type, timestamp: new Date().toISOString() });
           await flushQueue();
+          if (lastSyncError) {
+            Alert.alert('Sync failed', lastSyncError);
+          }
           await queryClient.invalidateQueries({ queryKey: qk.clockToday() });
           setSubmitting(false);
-          router.back();
+          if (!lastSyncError) router.back();
         },
       },
       { text: 'Cancel', style: 'cancel' },

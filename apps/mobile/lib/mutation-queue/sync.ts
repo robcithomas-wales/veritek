@@ -2,6 +2,7 @@ import { api } from '../api';
 import { getPending, markSuccess, markFailed } from './queue';
 
 let isFlushing = false;
+export let lastSyncError: string | null = null;
 
 export async function flushQueue(): Promise<void> {
   if (isFlushing) return;
@@ -26,9 +27,18 @@ export async function flushQueue(): Promise<void> {
     const failed = response.results.filter((r) => !r.success);
 
     markSuccess(succeeded);
-    failed.forEach((r) => markFailed(r.id, r.error ?? 'Server error'));
+    failed.forEach((r) => {
+      console.warn(`[sync] mutation ${r.id} failed: ${r.error}`);
+      markFailed(r.id, r.error ?? 'Server error');
+    });
+
+    lastSyncError = failed.length > 0
+      ? failed.map((r) => r.error).join('; ')
+      : null;
   } catch (err) {
-    // Network error — leave queue intact for next attempt
+    lastSyncError = err instanceof Error ? err.message : 'Network error';
+    console.warn('[sync] flush failed:', lastSyncError);
+    // Leave queue intact for next attempt
   } finally {
     isFlushing = false;
   }
