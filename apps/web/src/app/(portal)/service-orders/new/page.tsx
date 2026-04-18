@@ -33,7 +33,7 @@ export default async function NewServiceOrderPage() {
     <div className="flex-1 bg-gray-50">
       <Header title="New Service Order" />
 
-      <main className="p-6 max-w-2xl">
+      <main className="p-6 max-w-2xl mx-auto">
         <nav className="text-sm text-gray-500 flex items-center gap-2 mb-6">
           <Link href="/service-orders" className="hover:text-gray-700">Service Orders</Link>
           <span>/</span>

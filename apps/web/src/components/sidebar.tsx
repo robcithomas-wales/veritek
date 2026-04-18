@@ -6,15 +6,15 @@ import Logo from './logo';
 import type { AdminMe } from '@/lib/api';
 
 const NAV = [
-  { href: '/',               label: 'Dashboard',      icon: '⊞' },
-  { href: '/service-orders', label: 'Service Orders', icon: '📋' },
-  { href: '/dispatch',       label: 'Dispatch',        icon: '📡' },
-  { href: '/materials',      label: 'Materials',       icon: '🔧' },
-  { href: '/engineers',      label: 'Engineers',       icon: '👷' },
-  { href: '/sites',          label: 'Sites',           icon: '📍' },
-  { href: '/reports',        label: 'Reports',         icon: '📊' },
-  { href: '/webhooks',       label: 'Webhooks',        icon: '🔗' },
-  { href: '/api-keys',       label: 'API Keys',        icon: '🔑' },
+  { href: '/',               label: 'Dashboard',      icon: '⊞',  adminOnly: false },
+  { href: '/service-orders', label: 'Service Orders', icon: '📋', adminOnly: false },
+  { href: '/dispatch',       label: 'Dispatch',        icon: '📡', adminOnly: false },
+  { href: '/materials',      label: 'Materials',       icon: '🔧', adminOnly: false },
+  { href: '/engineers',      label: 'Engineers',       icon: '👷', adminOnly: false },
+  { href: '/sites',          label: 'Sites',           icon: '📍', adminOnly: false },
+  { href: '/reports',        label: 'Reports',         icon: '📊', adminOnly: false },
+  { href: '/webhooks',       label: 'Webhooks',        icon: '🔗', adminOnly: true  },
+  { href: '/api-keys',       label: 'API Keys',        icon: '🔑', adminOnly: true  },
 ];
 
 const ROLE_BADGE: Record<string, { label: string; colours: string }> = {
@@ -39,7 +39,7 @@ export default function Sidebar({ user }: { user: AdminMe }) {
       </Link>
 
       <nav className="flex-1 py-4 space-y-0.5 px-2">
-        {NAV.map(({ href, label, icon }) => {
+        {NAV.filter(({ adminOnly }) => !adminOnly || user.role === 'admin').map(({ href, label, icon }) => {
           const active = href === '/' ? pathname === '/' : pathname.startsWith(href);
           return (
             <Link

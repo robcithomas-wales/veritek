@@ -37,7 +37,7 @@ export default function NewApiKeyPage() {
     <div className="flex-1 bg-gray-50">
       <Header title="Issue API Key" />
 
-      <main className="p-6 max-w-2xl">
+      <main className="p-6 max-w-2xl mx-auto">
         <nav className="text-sm text-gray-500 flex items-center gap-2 mb-6">
           <Link href="/api-keys" className="hover:text-gray-700">API Keys</Link>
           <span>/</span>
