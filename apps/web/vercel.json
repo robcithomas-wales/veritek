@@ -1,4 +1,6 @@
 {
+  "framework": "nextjs",
   "buildCommand": "cd ../.. && pnpm turbo run build --filter=@veritek/web...",
-  "installCommand": "cd ../.. && pnpm install"
+  "installCommand": "cd ../.. && pnpm install",
+  "outputDirectory": ".next"
 }
