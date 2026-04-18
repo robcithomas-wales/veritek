@@ -167,6 +167,8 @@ export interface AdminUser {
   warehouseId: string | null;
   clockedIn: boolean;
   currentOrderId: string | null;
+  currentOrderRef: string | null;
+  currentSiteName: string | null;
 }
 
 export interface AdminUserDetail extends AdminUser {

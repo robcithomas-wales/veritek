@@ -10,7 +10,7 @@ const NAV = [
   { href: '/service-orders', label: 'Service Orders', icon: '📋', adminOnly: false },
   { href: '/dispatch',       label: 'Dispatch',        icon: '📡', adminOnly: false },
   { href: '/materials',      label: 'Materials',       icon: '🔧', adminOnly: false },
-  { href: '/engineers',      label: 'Engineers',       icon: '👷', adminOnly: false },
+  { href: '/engineers',      label: 'Users',           icon: '👷', adminOnly: false },
   { href: '/sites',          label: 'Sites',           icon: '📍', adminOnly: false },
   { href: '/reports',        label: 'Reports',         icon: '📊', adminOnly: false },
   { href: '/webhooks',       label: 'Webhooks',        icon: '🔗', adminOnly: true  },
