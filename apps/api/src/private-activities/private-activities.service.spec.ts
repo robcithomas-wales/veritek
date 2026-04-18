@@ -64,7 +64,7 @@ describe('PrivateActivitiesService', () => {
     it('creates a private activity and returns it', async () => {
       mockPrisma.privateActivity.create.mockResolvedValue(mockActivity);
       const result = await service.create(
-        { type: 'training', startTime: '2026-04-15T09:00:00.000Z' },
+        { type: 'training', startTime: '2026-04-15T09:00:00.000Z', subject: 'Test training' },
         mockUser,
       );
       expect(result).toEqual(mockActivity);
@@ -77,7 +77,7 @@ describe('PrivateActivitiesService', () => {
 
     it('emits private-activity.created event', async () => {
       mockPrisma.privateActivity.create.mockResolvedValue(mockActivity);
-      await service.create({ type: 'training', startTime: '2026-04-15T09:00:00.000Z' }, mockUser);
+      await service.create({ type: 'training', startTime: '2026-04-15T09:00:00.000Z', subject: 'Test training' }, mockUser);
       expect(mockEvents.emit).toHaveBeenCalledWith(
         'private-activity.created',
         expect.objectContaining({ userId: 'user-1' }),

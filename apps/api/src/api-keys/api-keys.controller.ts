@@ -7,7 +7,7 @@ import type { User } from '@prisma/client';
 
 @Controller('api-keys')
 @UseGuards(JwtAuthGuard)
-@Roles('admin')
+@Roles('dispatcher', 'admin')
 export class ApiKeysController {
   constructor(private readonly service: ApiKeysService) {}
 

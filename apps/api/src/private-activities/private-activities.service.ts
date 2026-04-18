@@ -21,6 +21,9 @@ export class PrivateActivitiesService {
         userId: user.id,
         type: dto.type as any,
         startTime: new Date(dto.startTime),
+        ...(dto.endTime !== undefined ? { endTime: new Date(dto.endTime), done: true } : {}),
+        ...(dto.subject !== undefined ? { subject: dto.subject } : {}),
+        ...(dto.location !== undefined ? { location: dto.location } : {}),
         ...(dto.notes !== undefined ? { notes: dto.notes } : {}),
       },
     });

@@ -5,7 +5,7 @@ import { WebhooksService } from './webhooks.service';
 
 @Controller('webhooks')
 @UseGuards(JwtAuthGuard)
-@Roles('admin')
+@Roles('dispatcher', 'admin')
 export class WebhooksController {
   constructor(private readonly service: WebhooksService) {}
 

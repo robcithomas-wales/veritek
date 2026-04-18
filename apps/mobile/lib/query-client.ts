@@ -19,6 +19,11 @@ export const qk = {
   stopCodes: () => ['reference', 'stop-codes'] as const,
   deliveryTypes: () => ['reference', 'delivery-types'] as const,
   checklists: (itemType: string) => ['reference', 'checklists', itemType] as const,
+  problemCodes: () => ['reference', 'problem-codes'] as const,
+  causeCodes: () => ['reference', 'cause-codes'] as const,
+  repairCodes: () => ['reference', 'repair-codes'] as const,
+  resolveCodes: () => ['reference', 'resolve-codes'] as const,
+  rejectionCodes: () => ['reference', 'rejection-codes'] as const,
   history: (params: Record<string, string>) => ['history', params] as const,
   privateActivities: (params?: Record<string, string>) =>
     params ? (['private-activities', params] as const) : (['private-activities'] as const),

@@ -1,4 +1,5 @@
-import { notFound } from 'next/navigation';
+import { notFound, redirect } from 'next/navigation';
+import { revalidatePath } from 'next/cache';
 import Link from 'next/link';
 import Header from '@/components/header';
 import { adminApi } from '@/lib/api';
@@ -76,6 +77,15 @@ export default async function EngineerDetailPage({ params }: PageProps) {
           </dl>
         </section>
 
+        {/* Danger zone */}
+        <section className="bg-white rounded-xl p-6 shadow-sm border border-red-100">
+          <h2 className="text-sm font-semibold text-gray-900 mb-1">Danger Zone</h2>
+          <p className="text-xs text-gray-500 mb-4">
+            Deactivating removes this engineer&apos;s access immediately. This action cannot be undone from the portal.
+          </p>
+          <DeactivateForm engineerId={id} engineerName={`${engineer.firstName} ${engineer.lastName}`} />
+        </section>
+
         {/* Today's clock events */}
         <section className="bg-white rounded-xl shadow-sm overflow-hidden">
           <div className="px-6 py-4 border-b border-gray-100">
@@ -108,5 +118,26 @@ export default async function EngineerDetailPage({ params }: PageProps) {
         </section>
       </main>
     </div>
+  );
+}
+
+function DeactivateForm({ engineerId, engineerName }: { engineerId: string; engineerName: string }) {
+  async function deactivate() {
+    'use server';
+    await adminApi.users.deactivate(engineerId);
+    revalidatePath('/engineers');
+    redirect('/engineers');
+  }
+
+  return (
+    <form action={deactivate}>
+      <input type="hidden" name="confirm" value={engineerName} />
+      <button
+        type="submit"
+        className="bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 text-sm font-medium px-4 py-2 rounded-lg transition-colors"
+      >
+        Deactivate {engineerName}
+      </button>
+    </form>
   );
 }

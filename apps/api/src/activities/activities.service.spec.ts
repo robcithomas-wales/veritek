@@ -37,7 +37,7 @@ const mockOrder = {
   id: 'order-1',
   assignedToId: 'user-1',
   siteId: 'site-1',
-  priority: 50,
+  priority: 'medium' as const,
   status: 'accepted' as const,
   description: null,
   reference: null,
@@ -57,7 +57,14 @@ const mockPrisma = {
     update: jest.fn(),
     updateMany: jest.fn(),
   },
+  item: {
+    findMany: jest.fn(),
+  },
+  checklistQuestion: {
+    findMany: jest.fn(),
+  },
   checklistResponse: {
+    findMany: jest.fn(),
     upsert: jest.fn(),
   },
   $transaction: jest.fn(),
@@ -166,67 +173,65 @@ describe('ActivitiesService', () => {
   describe('stopWork', () => {
     it('throws BadRequestException when activity is not in work status', async () => {
       mockPrisma.activity.findUnique.mockResolvedValue(mockActivity); // status: 'open'
-      await expect(service.stopWork('activity-1', { stopCode: 'FC', comments: undefined }, mockUser)).rejects.toThrow(BadRequestException);
+      await expect(service.stopWork('activity-1', { stopCode: 'COMP', comments: undefined }, mockUser)).rejects.toThrow(BadRequestException);
     });
 
-    it('updates status to complete with stopCode', async () => {
+    it('allows stop-work when there are no items (no checklist required)', async () => {
       mockPrisma.activity.findUnique.mockResolvedValue({ ...mockActivity, status: 'work' });
-      mockPrisma.activity.update.mockResolvedValue({ ...mockActivity, status: 'complete', stopCode: 'FC' });
-      await service.stopWork('activity-1', { stopCode: 'FC', comments: undefined }, mockUser);
+      mockPrisma.item.findMany.mockResolvedValue([]);
+      mockPrisma.activity.update.mockResolvedValue({ ...mockActivity, status: 'complete', stopCode: 'COMP' });
+      await service.stopWork('activity-1', { stopCode: 'COMP', comments: undefined }, mockUser);
       expect(mockPrisma.activity.update).toHaveBeenCalledWith(
-        expect.objectContaining({ data: expect.objectContaining({ status: 'complete', stopCode: 'FC' }) }),
+        expect.objectContaining({ data: expect.objectContaining({ status: 'complete', stopCode: 'COMP' }) }),
       );
+    });
+
+    it('allows stop-work when items exist but no checklist questions are defined', async () => {
+      mockPrisma.activity.findUnique.mockResolvedValue({ ...mockActivity, status: 'work' });
+      mockPrisma.item.findMany.mockResolvedValue([{ id: 'item-1', product: { sku: 'PUMP-001' } }]);
+      mockPrisma.checklistQuestion.findMany.mockResolvedValue([]);
+      mockPrisma.activity.update.mockResolvedValue({ ...mockActivity, status: 'complete' });
+      await service.stopWork('activity-1', { stopCode: 'COMP', comments: undefined }, mockUser);
+      expect(mockPrisma.activity.update).toHaveBeenCalled();
+    });
+
+    it('throws BadRequestException when checklist questions are not all answered', async () => {
+      mockPrisma.activity.findUnique.mockResolvedValue({ ...mockActivity, status: 'work' });
+      mockPrisma.item.findMany.mockResolvedValue([{ id: 'item-1', product: { sku: 'PUMP-001' } }]);
+      mockPrisma.checklistQuestion.findMany.mockResolvedValue([
+        { id: 'q-1', question: 'Is the filter clean?' },
+        { id: 'q-2', question: 'Is pressure within spec?' },
+      ]);
+      // Only one of two questions answered
+      mockPrisma.checklistResponse.findMany.mockResolvedValue([{ questionId: 'q-1' }]);
+      await expect(
+        service.stopWork('activity-1', { stopCode: 'COMP', comments: undefined }, mockUser),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('allows stop-work when all checklist questions are answered', async () => {
+      mockPrisma.activity.findUnique.mockResolvedValue({ ...mockActivity, status: 'work' });
+      mockPrisma.item.findMany.mockResolvedValue([{ id: 'item-1', product: { sku: 'PUMP-001' } }]);
+      mockPrisma.checklistQuestion.findMany.mockResolvedValue([
+        { id: 'q-1', question: 'Is the filter clean?' },
+        { id: 'q-2', question: 'Is pressure within spec?' },
+      ]);
+      mockPrisma.checklistResponse.findMany.mockResolvedValue([
+        { questionId: 'q-1' },
+        { questionId: 'q-2' },
+      ]);
+      mockPrisma.activity.update.mockResolvedValue({ ...mockActivity, status: 'complete' });
+      await service.stopWork('activity-1', { stopCode: 'COMP', comments: undefined }, mockUser);
+      expect(mockPrisma.activity.update).toHaveBeenCalled();
     });
 
     it('sets comments to null when not provided', async () => {
       mockPrisma.activity.findUnique.mockResolvedValue({ ...mockActivity, status: 'work' });
+      mockPrisma.item.findMany.mockResolvedValue([]);
       mockPrisma.activity.update.mockResolvedValue({ ...mockActivity, status: 'complete' });
-      await service.stopWork('activity-1', { stopCode: 'FC', comments: undefined }, mockUser);
+      await service.stopWork('activity-1', { stopCode: 'COMP', comments: undefined }, mockUser);
       expect(mockPrisma.activity.update).toHaveBeenCalledWith(
         expect.objectContaining({ data: expect.objectContaining({ comments: null }) }),
-      );
-    });
-  });
-
-  // ── complete ───────────────────────────────────────────────────────────────
-
-  describe('complete', () => {
-    it('throws NotFoundException when order does not exist', async () => {
-      mockPrisma.serviceOrder.findUnique.mockResolvedValue(null);
-      await expect(service.complete('order-1', mockUser, 'J. Smith')).rejects.toThrow(NotFoundException);
-    });
-
-    it('throws BadRequestException when an activity is not complete', async () => {
-      mockPrisma.serviceOrder.findUnique.mockResolvedValue({
-        ...mockOrder,
-        activities: [{ ...mockActivity, status: 'work' }],
-      });
-      await expect(service.complete('order-1', mockUser, 'J. Smith')).rejects.toThrow(BadRequestException);
-    });
-
-    it('updates order status to completed when all activities are done', async () => {
-      mockPrisma.serviceOrder.findUnique.mockResolvedValue({
-        ...mockOrder,
-        activities: [{ ...mockActivity, status: 'complete' }],
-      });
-      mockPrisma.serviceOrder.update.mockResolvedValue({ ...mockOrder, status: 'completed' });
-      await service.complete('order-1', mockUser, 'J. Smith');
-      expect(mockPrisma.serviceOrder.update).toHaveBeenCalledWith({
-        where: { id: 'order-1' },
-        data: { status: 'completed' },
-      });
-    });
-
-    it('emits job.completed event with signedBy', async () => {
-      mockPrisma.serviceOrder.findUnique.mockResolvedValue({
-        ...mockOrder,
-        activities: [{ ...mockActivity, status: 'complete' }],
-      });
-      mockPrisma.serviceOrder.update.mockResolvedValue({ ...mockOrder, status: 'completed' });
-      await service.complete('order-1', mockUser, 'J. Smith');
-      expect(mockEvents.emit).toHaveBeenCalledWith(
-        'job.completed',
-        expect.objectContaining({ orderId: 'order-1', signedBy: 'J. Smith' }),
       );
     });
   });

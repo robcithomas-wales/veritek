@@ -1,95 +1,133 @@
 import Link from 'next/link';
 import Header from '@/components/header';
 import { adminApi } from '@/lib/api';
-import { StatusBadge, PriorityBadge } from '@/components/ui/badge';
 
 function priorityLabel(p: number): string {
-  if (p < 20) return 'LOW';
-  if (p < 40) return 'MEDIUM';
-  if (p < 60) return 'HIGH';
-  if (p < 80) return 'CRITICAL';
-  return 'URGENT';
+  if (p < 20) return 'low';
+  if (p < 40) return 'medium';
+  if (p < 60) return 'high';
+  if (p < 80) return 'critical';
+  return 'urgent';
 }
 
-const STATUS_LABELS: Record<string, string> = {
-  received:    'Received',
-  accepted:    'Accepted',
-  in_route:    'In Route',
-  in_progress: 'In Progress',
-  completed:   'Completed',
-  closed:      'Closed',
+const STATUS_META: Record<string, { label: string; colour: string; dot: string }> = {
+  received:    { label: 'Received',    colour: 'bg-slate-50 border-slate-300',   dot: 'bg-slate-400' },
+  accepted:    { label: 'Accepted',    colour: 'bg-blue-50 border-blue-300',     dot: 'bg-blue-500' },
+  in_route:    { label: 'In Route',    colour: 'bg-violet-50 border-violet-300', dot: 'bg-violet-500' },
+  in_progress: { label: 'In Progress', colour: 'bg-amber-50 border-amber-300',   dot: 'bg-amber-500' },
+};
+
+const PRIORITY_META: Record<string, { label: string; bar: string; text: string }> = {
+  low:      { label: 'Low',      bar: 'bg-slate-400',  text: 'text-slate-600' },
+  medium:   { label: 'Medium',   bar: 'bg-blue-400',   text: 'text-blue-600' },
+  high:     { label: 'High',     bar: 'bg-amber-400',  text: 'text-amber-600' },
+  critical: { label: 'Critical', bar: 'bg-orange-500', text: 'text-orange-600' },
+  urgent:   { label: 'Urgent',   bar: 'bg-red-500',    text: 'text-red-600' },
 };
 
 export default async function DashboardPage() {
   const stats = await adminApi.serviceOrders.stats();
 
   const openStatuses = ['received', 'accepted', 'in_route', 'in_progress'];
-  const totalOpen = openStatuses.reduce(
-    (sum, s) => sum + (stats.byStatus[s] ?? 0),
-    0,
-  );
+  const totalOpen = openStatuses.reduce((sum, s) => sum + (stats.byStatus[s] ?? 0), 0);
   const inProgress = stats.byStatus['in_progress'] ?? 0;
 
-  const priorityBands = [
-    { label: 'LOW',      min: 0,  max: 19 },
-    { label: 'MEDIUM',   min: 20, max: 39 },
-    { label: 'HIGH',     min: 40, max: 59 },
-    { label: 'CRITICAL', min: 60, max: 79 },
-    { label: 'URGENT',   min: 80, max: 100 },
-  ];
+  const priorityTotal = Object.values(stats.byPriority as Record<string, number>).reduce((a, b) => a + b, 0) || 1;
 
   return (
-    <div className="flex-1 bg-gray-50">
+    <div className="flex-1 bg-gray-50 min-h-screen">
       <Header title="Dashboard" />
 
-      <main className="p-6 space-y-8">
-        {/* KPI row */}
-        <section>
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            <KpiCard label="Total Open" value={totalOpen} colour="blue" />
-            <KpiCard label="In Progress" value={inProgress} colour="orange" />
-            <KpiCard label="SLA At Risk" value={stats.slaAtRisk} colour="red" />
-            <KpiCard label="Engineers Clocked In" value={stats.engineersClockedIn} colour="green" />
-          </div>
-        </section>
+      <main className="p-6 space-y-6">
 
-        {/* Status + Priority breakdowns */}
-        <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-          {/* Status breakdown */}
-          <section>
-            <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">
-              By Status
-            </h2>
+        {/* KPI row */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <KpiCard
+            label="Open Orders"
+            value={totalOpen}
+            icon={<OrdersIcon />}
+            bg="from-blue-500 to-blue-600"
+            href="/service-orders"
+          />
+          <KpiCard
+            label="In Progress"
+            value={inProgress}
+            icon={<WrenchIcon />}
+            bg="from-amber-500 to-amber-600"
+            href="/service-orders?status=in_progress"
+          />
+          <KpiCard
+            label="SLA At Risk"
+            value={stats.slaAtRisk}
+            icon={<ClockAlertIcon />}
+            bg={stats.slaAtRisk > 0 ? 'from-red-500 to-red-600' : 'from-green-500 to-green-600'}
+            href="/service-orders"
+          />
+          <KpiCard
+            label="Clocked In"
+            value={stats.engineersClockedIn}
+            icon={<EngineerIcon />}
+            bg="from-violet-500 to-violet-600"
+            href="/engineers"
+          />
+        </div>
+
+        {/* Status + Priority */}
+        <div className="grid grid-cols-1 xl:grid-cols-5 gap-6">
+
+          {/* Status breakdown — wider */}
+          <section className="xl:col-span-3">
+            <SectionHeading>Orders by Status</SectionHeading>
             <div className="grid grid-cols-2 gap-3">
-              {openStatuses.map((status) => (
-                <Link
-                  key={status}
-                  href={`/service-orders?status=${status}`}
-                  className="bg-white rounded-xl p-5 shadow-sm hover:shadow-md transition-shadow group"
-                >
-                  <p className="text-2xl font-bold text-gray-900 group-hover:text-blue-600 transition-colors">
-                    {stats.byStatus[status] ?? 0}
-                  </p>
-                  <div className="mt-1">
-                    <StatusBadge status={status} />
-                  </div>
-                </Link>
-              ))}
+              {openStatuses.map((status) => {
+                const meta = STATUS_META[status]!;
+                const count = stats.byStatus[status] ?? 0;
+                return (
+                  <Link
+                    key={status}
+                    href={`/service-orders?status=${status}`}
+                    className={`bg-white rounded-xl border ${meta.colour} p-5 hover:shadow-md transition-shadow group`}
+                  >
+                    <div className="flex items-start justify-between">
+                      <div>
+                        <p className="text-3xl font-bold text-gray-900 group-hover:text-blue-600 transition-colors">
+                          {count}
+                        </p>
+                        <div className="flex items-center gap-2 mt-2">
+                          <span className={`w-2 h-2 rounded-full ${meta.dot}`} />
+                          <span className="text-sm font-medium text-gray-600">{meta.label}</span>
+                        </div>
+                      </div>
+                      <span className="text-2xl opacity-60 group-hover:opacity-100 transition-opacity">→</span>
+                    </div>
+                  </Link>
+                );
+              })}
             </div>
           </section>
 
           {/* Priority breakdown */}
-          <section>
-            <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">
-              By Priority
-            </h2>
-            <div className="bg-white rounded-xl shadow-sm divide-y divide-gray-100">
-              {priorityBands.map(({ label, min }) => {
-                const count = stats.byPriority[label] ?? stats.byPriority[label.toLowerCase()] ?? 0;
+          <section className="xl:col-span-2">
+            <SectionHeading>Orders by Priority</SectionHeading>
+            <div className="bg-white rounded-xl border border-gray-200 p-5 space-y-4">
+              {(['urgent', 'critical', 'high', 'medium', 'low'] as const).map((key) => {
+                const meta = PRIORITY_META[key]!;
+                const count = (stats.byPriority as Record<string, number>)[key] ?? 0;
+                const pct = Math.round((count / priorityTotal) * 100);
                 return (
-                  <div key={label} className="flex items-center justify-between px-5 py-3">
-                    <PriorityBadge priority={min} />
-                    <span className="text-lg font-semibold text-gray-900">{count}</span>
+                  <div key={key}>
+                    <div className="flex items-center justify-between mb-1.5">
+                      <span className={`text-xs font-semibold uppercase tracking-wide ${meta.text}`}>
+                        {meta.label}
+                      </span>
+                      <span className="text-sm font-bold text-gray-800">{count}</span>
+                    </div>
+                    <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                      <div
+                        className={`h-full rounded-full ${meta.bar} transition-all duration-500`}
+                        style={{ width: `${pct}%` }}
+                      />
+                    </div>
                   </div>
                 );
               })}
@@ -99,72 +137,130 @@ export default async function DashboardPage() {
 
         {/* Recent completions */}
         <section>
-          <h2 className="text-sm font-semibold text-gray-500 uppercase tracking-wide mb-3">
-            Recent Completions
-          </h2>
-          <div className="bg-white rounded-xl shadow-sm overflow-hidden">
-            <table className="w-full text-sm">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Ref</th>
-                  <th className="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Site</th>
-                  <th className="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Engineer</th>
-                  <th className="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Completed</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-100">
-                {stats.recentlyCompleted.length === 0 ? (
-                  <tr>
-                    <td colSpan={4} className="px-5 py-8 text-center text-gray-400">
-                      No completed orders yet
-                    </td>
+          <SectionHeading>Recent Completions</SectionHeading>
+          <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+            {stats.recentlyCompleted.length === 0 ? (
+              <div className="py-16 text-center">
+                <p className="text-4xl mb-3">✓</p>
+                <p className="text-gray-400 text-sm">No completed orders yet</p>
+              </div>
+            ) : (
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="bg-gray-50 border-b border-gray-200">
+                    <th className="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Reference</th>
+                    <th className="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Site</th>
+                    <th className="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Engineer</th>
+                    <th className="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Priority</th>
+                    <th className="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Completed</th>
                   </tr>
-                ) : (
-                  stats.recentlyCompleted.map((order) => (
-                    <tr key={order.id} className="hover:bg-gray-50">
-                      <td className="px-5 py-3">
-                        <Link href={`/service-orders/${order.id}`} className="font-medium text-blue-600 hover:underline">
-                          {order.reference}
-                        </Link>
-                      </td>
-                      <td className="px-5 py-3 text-gray-700">{order.siteName}</td>
-                      <td className="px-5 py-3 text-gray-700">{order.engineerName ?? '—'}</td>
-                      <td className="px-5 py-3 text-gray-500">
-                        {new Date(order.updatedAt).toLocaleString('en-GB', {
-                          day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit',
-                        })}
-                      </td>
-                    </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
+                </thead>
+                <tbody className="divide-y divide-gray-100">
+                  {stats.recentlyCompleted.map((order) => {
+                    const pLabel = priorityLabel(order.priority);
+                    const pMeta = PRIORITY_META[pLabel]!;
+                    return (
+                      <tr key={order.id} className="hover:bg-gray-50 transition-colors">
+                        <td className="px-5 py-3.5">
+                          <Link href={`/service-orders/${order.id}`} className="font-semibold text-blue-600 hover:underline">
+                            {order.reference}
+                          </Link>
+                        </td>
+                        <td className="px-5 py-3.5 text-gray-700">{order.siteName}</td>
+                        <td className="px-5 py-3.5 text-gray-700">{order.engineerName ?? '—'}</td>
+                        <td className="px-5 py-3.5">
+                          <span className={`text-xs font-semibold uppercase tracking-wide ${pMeta.text}`}>
+                            {pMeta.label}
+                          </span>
+                        </td>
+                        <td className="px-5 py-3.5 text-gray-400 text-xs">
+                          {new Date(order.updatedAt).toLocaleString('en-GB', {
+                            day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit',
+                          })}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            )}
           </div>
         </section>
+
       </main>
     </div>
   );
 }
 
+function SectionHeading({ children }: { children: React.ReactNode }) {
+  return (
+    <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3">
+      {children}
+    </h2>
+  );
+}
+
 function KpiCard({
-  label,
-  value,
-  colour,
+  label, value, icon, bg, href,
 }: {
   label: string;
   value: number;
-  colour: 'blue' | 'orange' | 'red' | 'green';
+  icon: React.ReactNode;
+  bg: string;
+  href: string;
 }) {
-  const colourClasses: Record<typeof colour, string> = {
-    blue:   'text-blue-600',
-    orange: 'text-orange-500',
-    red:    'text-red-600',
-    green:  'text-green-600',
-  };
   return (
-    <div className="bg-white rounded-xl p-6 shadow-sm">
-      <p className="text-sm font-medium text-gray-500">{label}</p>
-      <p className={`mt-2 text-4xl font-bold ${colourClasses[colour]}`}>{value}</p>
-    </div>
+    <Link href={href} className="group">
+      <div className={`bg-gradient-to-br ${bg} rounded-xl p-5 text-white shadow-sm hover:shadow-lg transition-shadow`}>
+        <div className="flex items-start justify-between">
+          <div>
+            <p className="text-sm font-medium opacity-80">{label}</p>
+            <p className="text-4xl font-bold mt-1">{value}</p>
+          </div>
+          <div className="opacity-70 group-hover:opacity-100 transition-opacity mt-0.5">
+            {icon}
+          </div>
+        </div>
+      </div>
+    </Link>
+  );
+}
+
+function OrdersIcon() {
+  return (
+    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M9 5H7a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-2" />
+      <rect x="9" y="3" width="6" height="4" rx="1" />
+      <line x1="9" y1="12" x2="15" y2="12" />
+      <line x1="9" y1="16" x2="13" y2="16" />
+    </svg>
+  );
+}
+
+function WrenchIcon() {
+  return (
+    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z" />
+    </svg>
+  );
+}
+
+function ClockAlertIcon() {
+  return (
+    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="12" r="10" />
+      <polyline points="12 6 12 12 16 14" />
+    </svg>
+  );
+}
+
+function EngineerIcon() {
+  return (
+    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+      <circle cx="9" cy="7" r="4" />
+      <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+      <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+    </svg>
   );
 }

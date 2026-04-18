@@ -21,4 +21,29 @@ export class ReferenceController {
   checklists(@Query('itemType') itemType: string) {
     return this.reference.checklists(itemType);
   }
+
+  @Get('problem-codes')
+  problemCodes() {
+    return this.reference.problemCodes();
+  }
+
+  @Get('cause-codes')
+  causeCodes() {
+    return this.reference.causeCodes();
+  }
+
+  @Get('repair-codes')
+  repairCodes() {
+    return this.reference.repairCodes();
+  }
+
+  @Get('resolve-codes')
+  resolveCodes() {
+    return this.reference.resolveCodes();
+  }
+
+  @Get('rejection-codes')
+  rejectionCodes() {
+    return this.reference.rejectionCodes();
+  }
 }

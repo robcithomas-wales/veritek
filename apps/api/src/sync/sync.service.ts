@@ -3,6 +3,7 @@ import { ActivitiesService } from '../activities/activities.service';
 import { MaterialsService } from '../materials/materials.service';
 import { ClockService } from '../clock/clock.service';
 import { ServiceOrdersService } from '../service-orders/service-orders.service';
+import { PrivateActivitiesService } from '../private-activities/private-activities.service';
 import type { User } from '@prisma/client';
 import type { SyncRequestDto } from '@veritek/validators';
 import {
@@ -13,7 +14,9 @@ import {
   CreateMaterialSchema,
   UpdateMaterialSchema,
   ClockEventSchema,
-  RejectServiceOrderSchema,
+  RejectServiceOrderWithCodeSchema,
+  CreatePrivateActivitySchema,
+  CompletePrivateActivitySchema,
 } from '@veritek/validators';
 
 @Injectable()
@@ -25,6 +28,7 @@ export class SyncService {
     private readonly materials: MaterialsService,
     private readonly clock: ClockService,
     private readonly serviceOrders: ServiceOrdersService,
+    private readonly privateActivities: PrivateActivitiesService,
   ) {}
 
   async flush(dto: SyncRequestDto, user: User) {
@@ -104,7 +108,7 @@ export class SyncService {
     // PATCH /service-orders/:id/reject
     const reject = endpoint.match(/^\/service-orders\/([^/]+)\/reject$/);
     if (method === 'PATCH' && reject) {
-      const dto = RejectServiceOrderSchema.parse(body);
+      const dto = RejectServiceOrderWithCodeSchema.parse(body);
       return this.serviceOrders.reject(reject[1]!, user, dto);
     }
 
@@ -126,6 +130,25 @@ export class SyncService {
     if (method === 'POST' && endpoint === '/clock') {
       const dto = ClockEventSchema.parse(body);
       return this.clock.record(dto, user);
+    }
+
+    // POST /private-activities
+    if (method === 'POST' && endpoint === '/private-activities') {
+      const dto = CreatePrivateActivitySchema.parse(body);
+      return this.privateActivities.create(dto, user);
+    }
+
+    // PATCH /private-activities/:id/complete
+    const completePrivate = endpoint.match(/^\/private-activities\/([^/]+)\/complete$/);
+    if (method === 'PATCH' && completePrivate) {
+      const dto = CompletePrivateActivitySchema.parse(body);
+      return this.privateActivities.complete(completePrivate[1]!, dto, user);
+    }
+
+    // DELETE /private-activities/:id
+    const deletePrivate = endpoint.match(/^\/private-activities\/([^/]+)$/);
+    if (method === 'DELETE' && deletePrivate) {
+      return this.privateActivities.remove(deletePrivate[1]!, user);
     }
 
     throw new Error(`Unrecognised mutation: ${method} ${endpoint}`);

@@ -51,8 +51,19 @@ export const adminApi = {
     close: (id: string) => req<AdminOrderDetail>('PATCH', `/admin/service-orders/${id}/close`, {}),
   },
   users: {
+    me: () => req<AdminMe>('GET', '/admin/users/me'),
     list: (params?: { role?: string }) => req<AdminUser[]>('GET', '/admin/users', undefined, params as any),
     get: (id: string) => req<AdminUserDetail>('GET', `/admin/users/${id}`),
+    create: (body: CreateUserBody) => req<AdminUser>('POST', '/admin/users', body),
+    update: (id: string, body: UpdateUserBody) => req<AdminUser>('PATCH', `/admin/users/${id}`, body),
+    deactivate: (id: string) => req<AdminUser>('PATCH', `/admin/users/${id}/deactivate`, {}),
+    warehouses: () => req<Warehouse[]>('GET', '/admin/users/warehouses'),
+  },
+  sites: {
+    list: (params?: { search?: string }) => req<Site[]>('GET', '/admin/sites', undefined, params as any),
+    get: (id: string) => req<Site>('GET', `/admin/sites/${id}`),
+    create: (body: CreateSiteBody) => req<Site>('POST', '/admin/sites', body),
+    update: (id: string, body: UpdateSiteBody) => req<Site>('PATCH', `/admin/sites/${id}`, body),
   },
   webhooks: {
     list: () => req<WebhookSubscription[]>('GET', '/webhooks'),
@@ -69,6 +80,14 @@ export const adminApi = {
     suspend: (id: string) => req<ApiKey>('PATCH', `/api-keys/${id}/suspend`, {}),
     activate: (id: string) => req<ApiKey>('PATCH', `/api-keys/${id}/activate`, {}),
     revoke: (id: string) => req<void>('DELETE', `/api-keys/${id}`),
+  },
+  materials: {
+    list: (params?: AdminMaterialsQuery) =>
+      req<AdminMaterial[]>('GET', '/admin/materials', undefined, params as any),
+  },
+  reports: {
+    get: (params?: ReportsQuery) =>
+      req<ReportsData>('GET', '/admin/service-orders/reports', undefined, params as any),
   },
 };
 
@@ -129,6 +148,14 @@ export interface CreateOrderBody {
   priority: number;
   engineerId?: string;
   eta?: string;
+}
+
+export interface AdminMe {
+  id: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  role: 'admin' | 'dispatcher' | 'engineer';
 }
 
 export interface AdminUser {
@@ -193,3 +220,88 @@ export interface ApiKeyUsagePage {
 }
 
 export interface CreateApiKeyBody { name: string; scopes: string[]; expiresAt?: string }
+
+export interface AdminMaterialsQuery {
+  status?: string;
+  engineerId?: string;
+  serviceOrderId?: string;
+  from?: string;
+  to?: string;
+}
+
+export interface AdminMaterial {
+  id: string;
+  qty: number;
+  status: string;
+  disposition: string;
+  returnable: boolean;
+  createdAt: string;
+  updatedAt: string;
+  returnReason: string | null;
+  product: { id: string; sku: string; name: string };
+  serviceOrder: {
+    id: string;
+    reference: string;
+    status: string;
+    siteName: string | null;
+    engineerName: string | null;
+  };
+}
+
+export interface ReportsQuery {
+  period?: '7d' | '30d' | '90d';
+  from?: string;
+  to?: string;
+}
+
+export interface CreateUserBody {
+  email: string;
+  firstName: string;
+  lastName: string;
+  role: string;
+  warehouseId?: string;
+}
+
+export interface UpdateUserBody {
+  firstName?: string;
+  lastName?: string;
+  role?: string;
+  warehouseId?: string | null;
+}
+
+export interface Warehouse {
+  id: string;
+  name: string;
+}
+
+export interface Site {
+  id: string;
+  name: string;
+  address: string | null;
+  postcode: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateSiteBody { name: string; address?: string; postcode?: string }
+export interface UpdateSiteBody { name?: string; address?: string; postcode?: string }
+
+export interface ReportsData {
+  period: { from: string; to: string };
+  completed: {
+    total: number;
+    withinSla: number;
+    slaPct: number;
+    byDay: Record<string, number>;
+    orders: {
+      id: string;
+      reference: string;
+      priority: number;
+      siteName: string;
+      engineerName: string | null;
+      completedAt: string;
+      withinSla: boolean;
+    }[];
+  };
+  partsUsage: { id: string; sku: string; name: string; qty: number }[];
+}

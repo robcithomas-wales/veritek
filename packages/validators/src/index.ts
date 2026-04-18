@@ -6,6 +6,31 @@ export const RejectServiceOrderSchema = z.object({
   reason: z.string().min(1),
 });
 
+export const ResolutionSchema = z.object({
+  problemCode: z.string().min(1),
+  causeCode: z.string().min(1),
+  repairCode: z.string().min(1),
+  resolveCode: z.string().min(1),
+  resolveText: z.string().min(1),
+  fullyResolved: z.boolean(),
+});
+
+export const CompleteServiceOrderSchema = z.object({
+  signatureData: z.string().min(1),
+  signedByName: z.string().min(1),
+  resolution: ResolutionSchema,
+});
+
+export const RejectServiceOrderWithCodeSchema = z.object({
+  rejectionCode: z.string().min(1),
+});
+
+export const AddAttachmentSchema = z.object({
+  filename: z.string().min(1),
+  mimeType: z.enum(['image/jpeg', 'image/png', 'image/heic']),
+  data: z.string().min(1),
+});
+
 export const ServiceOrderHistoryQuerySchema = z.object({
   query: z.string().optional(),
   status: z.enum(['received','accepted','in_route','in_progress','completed','closed']).optional(),
@@ -51,6 +76,7 @@ export const UpdateMaterialSchema = z.object({
   status: z.enum(['needed','allocated','back_ordered','fulfilled','not_used','cancelled']).optional(),
   disposition: z.enum(['open','fulfilled','not_used','doa']).optional(),
   serialNumber: z.string().optional(),
+  qtyFitted: z.number().int().min(0).optional(),
   returnReason: z.string().optional(),
   returnWarehouseId: z.string().cuid().optional(),
 });
@@ -81,6 +107,9 @@ export const SyncRequestSchema = z.object({
 export const CreatePrivateActivitySchema = z.object({
   type: z.enum(['travel', 'training', 'holiday', 'absence', 'other']),
   startTime: z.string().datetime(),
+  endTime: z.string().datetime().optional(),
+  subject: z.string().min(1),
+  location: z.string().optional(),
   notes: z.string().optional(),
 });
 
@@ -135,6 +164,10 @@ export const UpdateShipmentStatusSchema = z.object({
 // ─── Inferred types ───────────────────────────────────────────────────────────
 
 export type RejectServiceOrderDto = z.infer<typeof RejectServiceOrderSchema>;
+export type CompleteServiceOrderDto = z.infer<typeof CompleteServiceOrderSchema>;
+export type ResolutionDto = z.infer<typeof ResolutionSchema>;
+export type RejectServiceOrderWithCodeDto = z.infer<typeof RejectServiceOrderWithCodeSchema>;
+export type AddAttachmentDto = z.infer<typeof AddAttachmentSchema>;
 export type ServiceOrderHistoryQuery = z.infer<typeof ServiceOrderHistoryQuerySchema>;
 export type CreateActivityDto = z.infer<typeof CreateActivitySchema>;
 export type StartWorkDto = z.infer<typeof StartWorkSchema>;

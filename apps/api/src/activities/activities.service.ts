@@ -88,6 +88,33 @@ export class ActivitiesService {
     if (activity.status !== 'work') {
       throw new BadRequestException('Activity must be in work status to stop');
     }
+
+    // Checklist gate: if any checklist questions exist for the items on this order,
+    // every question must have a response before stop-work is allowed.
+    const items = await this.prisma.item.findMany({
+      where: { serviceOrderId: activity.serviceOrderId },
+      include: { product: true },
+    });
+    const itemTypes = [...new Set(items.map((i) => (i as any).product?.sku).filter(Boolean))];
+    if (itemTypes.length > 0) {
+      const questions = await this.prisma.checklistQuestion.findMany({
+        where: { itemType: { in: itemTypes } },
+      });
+      if (questions.length > 0) {
+        const responses = await this.prisma.checklistResponse.findMany({
+          where: { activityId: id },
+          select: { questionId: true },
+        });
+        const answeredIds = new Set(responses.map((r) => r.questionId));
+        const unanswered = questions.filter((q) => !answeredIds.has(q.id));
+        if (unanswered.length > 0) {
+          throw new BadRequestException(
+            `Checklist incomplete — ${unanswered.length} question(s) must be answered before stopping work`,
+          );
+        }
+      }
+    }
+
     return this.prisma.activity.update({
       where: { id },
       data: {

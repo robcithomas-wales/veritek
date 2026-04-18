@@ -2,6 +2,8 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import Logo from './logo';
+import type { AdminMe } from '@/lib/api';
 
 const NAV = [
   { href: '/',               label: 'Dashboard',      icon: '⊞' },
@@ -9,20 +11,33 @@ const NAV = [
   { href: '/dispatch',       label: 'Dispatch',        icon: '📡' },
   { href: '/materials',      label: 'Materials',       icon: '🔧' },
   { href: '/engineers',      label: 'Engineers',       icon: '👷' },
+  { href: '/sites',          label: 'Sites',           icon: '📍' },
   { href: '/reports',        label: 'Reports',         icon: '📊' },
   { href: '/webhooks',       label: 'Webhooks',        icon: '🔗' },
   { href: '/api-keys',       label: 'API Keys',        icon: '🔑' },
 ];
 
-export default function Sidebar() {
+const ROLE_BADGE: Record<string, { label: string; colours: string }> = {
+  admin:      { label: 'Admin',      colours: 'bg-violet-500/20 text-violet-200 ring-violet-500/30' },
+  dispatcher: { label: 'Dispatcher', colours: 'bg-blue-500/20 text-blue-200 ring-blue-500/30' },
+  engineer:   { label: 'Engineer',   colours: 'bg-emerald-500/20 text-emerald-200 ring-emerald-500/30' },
+};
+
+export default function Sidebar({ user }: { user: AdminMe }) {
   const pathname = usePathname();
+  const badge = ROLE_BADGE[user.role] ?? ROLE_BADGE['dispatcher'];
+  const initials = `${user.firstName[0]}${user.lastName[0]}`.toUpperCase();
 
   return (
     <aside className="w-60 min-h-screen bg-brand-900 flex flex-col">
-      <div className="h-16 flex items-center px-5 border-b border-brand-800">
-        <span className="text-white font-bold text-lg tracking-tight">Veritek</span>
-        <span className="ml-2 text-brand-100 text-xs font-medium">Back Office</span>
-      </div>
+      <Link href="/" className="h-16 flex items-center px-5 gap-3 border-b border-brand-800 hover:opacity-80 transition-opacity">
+        <Logo height={32} />
+        <span className="text-brand-100 font-medium leading-tight">
+          <span className="text-base">Veritek</span><br />
+          <span className="text-xs">Back Office System</span>
+        </span>
+      </Link>
+
       <nav className="flex-1 py-4 space-y-0.5 px-2">
         {NAV.map(({ href, label, icon }) => {
           const active = href === '/' ? pathname === '/' : pathname.startsWith(href);
@@ -42,6 +57,23 @@ export default function Sidebar() {
           );
         })}
       </nav>
+
+      {/* User identity card */}
+      <div className="px-3 pb-4 pt-2 border-t border-brand-800">
+        <div className="flex items-center gap-3 px-2 py-2.5 rounded-lg">
+          <div className="w-8 h-8 rounded-full bg-brand-700 flex items-center justify-center text-xs font-bold text-white shrink-0">
+            {initials}
+          </div>
+          <div className="min-w-0">
+            <p className="text-sm font-medium text-white truncate">
+              {user.firstName} {user.lastName}
+            </p>
+            <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ring-1 ring-inset mt-0.5 ${badge.colours}`}>
+              {badge.label}
+            </span>
+          </div>
+        </div>
+      </div>
     </aside>
   );
 }

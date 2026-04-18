@@ -18,6 +18,15 @@ export class AdminServiceOrdersController {
     return this.service.stats();
   }
 
+  @Get('reports')
+  reports(@Query() query: Record<string, string>) {
+    const params: { period?: string; from?: string; to?: string } = {};
+    if (query['period']) params['period'] = query['period'];
+    if (query['from']) params['from'] = query['from'];
+    if (query['to']) params['to'] = query['to'];
+    return this.service.reports(params);
+  }
+
   @Get()
   list(@Query() query: Record<string, string>) {
     const params: Record<string, string | number> = {};

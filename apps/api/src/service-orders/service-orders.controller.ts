@@ -3,6 +3,7 @@ import {
   Get,
   Param,
   Patch,
+  Post,
   Body,
   Query,
   UseGuards,
@@ -13,7 +14,9 @@ import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { ServiceOrdersService } from './service-orders.service';
 import { ZodValidationPipe } from '../common/zod-validation.pipe';
 import {
-  RejectServiceOrderSchema,
+  RejectServiceOrderWithCodeSchema,
+  CompleteServiceOrderSchema,
+  AddAttachmentSchema,
   ServiceOrderHistoryQuerySchema,
 } from '@veritek/validators';
 import type { User } from '@prisma/client';
@@ -44,8 +47,28 @@ export class ServiceOrdersController {
     return this.serviceOrders.accept(id, user);
   }
 
+  @Post(':id/complete')
+  @UsePipes(new ZodValidationPipe(CompleteServiceOrderSchema, 'body'))
+  complete(
+    @Param('id') id: string,
+    @CurrentUser() user: User,
+    @Body() body: unknown,
+  ) {
+    return this.serviceOrders.complete(id, user.id, body as any);
+  }
+
+  @Post(':id/attachments')
+  @UsePipes(new ZodValidationPipe(AddAttachmentSchema, 'body'))
+  addAttachment(
+    @Param('id') id: string,
+    @CurrentUser() user: User,
+    @Body() body: unknown,
+  ) {
+    return this.serviceOrders.addAttachment(id, user.id, body as any);
+  }
+
   @Patch(':id/reject')
-  @UsePipes(new ZodValidationPipe(RejectServiceOrderSchema, 'body'))
+  @UsePipes(new ZodValidationPipe(RejectServiceOrderWithCodeSchema, 'body'))
   reject(
     @Param('id') id: string,
     @CurrentUser() user: User,

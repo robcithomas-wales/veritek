@@ -24,7 +24,7 @@ export default function CompletionScreen() {
     await flushQueue();
     await queryClient.invalidateQueries({ queryKey: qk.serviceOrder(id) });
     setSubmitting(false);
-    router.push(`/service-order/${id}/signature`);
+    router.push(`/service-order/${id}/resolution`);
   }
 
   return (

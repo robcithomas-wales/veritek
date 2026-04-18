@@ -19,4 +19,24 @@ export class ReferenceService {
       orderBy: { order: 'asc' },
     });
   }
+
+  problemCodes() {
+    return this.prisma.problemCode.findMany({ orderBy: { code: 'asc' } });
+  }
+
+  causeCodes() {
+    return this.prisma.causeCode.findMany({ orderBy: { code: 'asc' } });
+  }
+
+  repairCodes() {
+    return this.prisma.repairCode.findMany({ orderBy: { code: 'asc' } });
+  }
+
+  resolveCodes() {
+    return this.prisma.resolveCode.findMany({ orderBy: { code: 'asc' } });
+  }
+
+  rejectionCodes() {
+    return this.prisma.rejectionCode.findMany({ orderBy: { code: 'asc' } });
+  }
 }

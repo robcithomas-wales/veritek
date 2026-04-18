@@ -10,6 +10,8 @@ export type ServiceOrderStatus =
   | 'completed'
   | 'closed';
 
+export type ServiceOrderPriority = 'low' | 'medium' | 'high' | 'critical';
+
 export type ActivityType =
   | 'break_fix'
   | 'preventive_maintenance'
@@ -93,10 +95,20 @@ export interface ServiceOrder {
   id: string;
   assignedToId: string;
   siteId: string;
-  priority: number;
+  priority: ServiceOrderPriority;
   status: ServiceOrderStatus;
+  svNumber: string | null;
+  shortDescription: string | null;
+  problemDescription: string | null;
+  contactName: string | null;
+  contactPhone: string | null;
   description: string | null;
   reference: string | null;
+  eta: string | null;
+  customerDueDate: string | null;
+  signatureData: string | null;
+  signedByName: string | null;
+  resolution: Resolution | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -143,9 +155,12 @@ export interface Material {
   serviceOrderId: string;
   productId: string;
   qty: number;
+  qtyFitted: number;
   status: MaterialStatus;
   disposition: MaterialDisposition;
   returnable: boolean;
+  isConsigned: boolean;
+  serialNumber: string | null;
   returnProduct: ReturnProduct | null;
   createdAt: string;
   updatedAt: string;
@@ -198,6 +213,8 @@ export interface PrivateActivity {
   startTime: string;
   endTime: string | null;
   done: boolean;
+  subject: string | null;
+  location: string | null;
   notes: string | null;
   createdAt: string;
   updatedAt: string;
@@ -244,6 +261,7 @@ export interface Product {
   name: string;
   description: string | null;
   returnable: boolean;
+  serialized: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -320,6 +338,21 @@ export interface ApiKeyUsage {
 export interface StopCode {
   code: string;
   description: string;
+}
+
+export interface ProblemCode { code: string; description: string; }
+export interface CauseCode   { code: string; description: string; }
+export interface RepairCode  { code: string; description: string; }
+export interface ResolveCode { code: string; description: string; }
+export interface RejectionCode { code: string; description: string; }
+
+export interface Resolution {
+  problemCode: string;
+  causeCode: string;
+  repairCode: string;
+  resolveCode: string;
+  resolveText: string;
+  fullyResolved: boolean;
 }
 
 export interface DeliveryType {

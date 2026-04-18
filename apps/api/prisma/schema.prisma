@@ -73,13 +73,22 @@ model ServiceOrder {
   id           String             @id @default(cuid())
   assignedToId String             @map("assigned_to_id")
   siteId       String             @map("site_id")
-  priority     Int
+  priority     ServiceOrderPriority @default(medium)
   status       ServiceOrderStatus @default(received)
-  description  String?
-  reference    String?
-  eta          DateTime?
-  createdAt    DateTime           @default(now()) @map("created_at")
-  updatedAt    DateTime           @updatedAt @map("updated_at")
+  svNumber          String?           @map("sv_number")
+  shortDescription  String?           @map("short_description")
+  problemDescription String?          @map("problem_description")
+  contactName       String?           @map("contact_name")
+  contactPhone      String?           @map("contact_phone")
+  description       String?
+  reference         String?
+  eta               DateTime?
+  customerDueDate   DateTime?         @map("customer_due_date")
+  signatureData     String?           @map("signature_data")
+  signedByName   String?           @map("signed_by_name")
+  resolution     Json?
+  createdAt      DateTime          @default(now()) @map("created_at")
+  updatedAt     DateTime          @updatedAt @map("updated_at")
 
   assignedTo  User         @relation(fields: [assignedToId], references: [id])
   site        Site         @relation(fields: [siteId], references: [id])
@@ -141,9 +150,12 @@ model Material {
   serviceOrderId String              @map("service_order_id")
   productId      String              @map("product_id")
   qty            Int                 @default(1)
+  qtyFitted      Int                 @default(0) @map("qty_fitted")
   status         MaterialStatus      @default(needed)
   disposition    MaterialDisposition @default(open)
   returnable     Boolean             @default(false)
+  isConsigned    Boolean             @default(false) @map("is_consigned")
+  serialNumber   String?             @map("serial_number")
   createdAt      DateTime            @default(now()) @map("created_at")
   updatedAt      DateTime            @updatedAt @map("updated_at")
 
@@ -191,6 +203,7 @@ model Product {
   name        String
   description String?
   returnable  Boolean  @default(false)
+  serialized  Boolean  @default(false)
   createdAt   DateTime @default(now()) @map("created_at")
   updatedAt   DateTime @updatedAt @map("updated_at")
 
@@ -294,6 +307,8 @@ model PrivateActivity {
   startTime DateTime            @map("start_time")
   endTime   DateTime?           @map("end_time")
   done      Boolean             @default(false)
+  subject   String?
+  location  String?
   notes     String?
   createdAt DateTime            @default(now()) @map("created_at")
   updatedAt DateTime            @updatedAt @map("updated_at")
@@ -366,6 +381,41 @@ model DeliveryType {
   updatedAt   DateTime @updatedAt @map("updated_at")
 
   @@map("delivery_types")
+}
+
+model ProblemCode {
+  code        String @id
+  description String
+
+  @@map("problem_codes")
+}
+
+model CauseCode {
+  code        String @id
+  description String
+
+  @@map("cause_codes")
+}
+
+model RepairCode {
+  code        String @id
+  description String
+
+  @@map("repair_codes")
+}
+
+model ResolveCode {
+  code        String @id
+  description String
+
+  @@map("resolve_codes")
+}
+
+model RejectionCode {
+  code        String @id
+  description String
+
+  @@map("rejection_codes")
 }
 
 // ─── Webhooks ─────────────────────────────────────────────────────────────────
@@ -456,6 +506,15 @@ enum ServiceOrderStatus {
   closed
 
   @@map("service_order_status")
+}
+
+enum ServiceOrderPriority {
+  low
+  medium
+  high
+  critical
+
+  @@map("service_order_priority")
 }
 
 enum ActivityType {

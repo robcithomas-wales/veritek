@@ -1,9 +1,21 @@
 import { Test } from '@nestjs/testing';
-import { NotFoundException, BadRequestException } from '@nestjs/common';
+import { NotFoundException, BadRequestException, InternalServerErrorException } from '@nestjs/common';
 import { ServiceOrdersService } from './service-orders.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { EventsService } from '../events/events.service';
 import type { User } from '@prisma/client';
+
+// Suppress Supabase client instantiation in addAttachment tests
+jest.mock('@supabase/supabase-js', () => ({
+  createClient: jest.fn(() => ({
+    storage: {
+      from: jest.fn(() => ({
+        upload: jest.fn().mockResolvedValue({ error: null }),
+        getPublicUrl: jest.fn().mockReturnValue({ data: { publicUrl: 'https://cdn.example.com/file.jpg' } }),
+      })),
+    },
+  })),
+}));
 
 const mockUser: User = {
   id: 'user-1',
@@ -22,7 +34,7 @@ const mockOrder = {
   id: 'order-1',
   assignedToId: 'user-1',
   siteId: 'site-1',
-  priority: 50,
+  priority: 'medium' as const,
   status: 'received' as const,
   description: null,
   reference: null,
@@ -36,12 +48,27 @@ const mockOrder = {
   attachments: [],
 };
 
+const mockResolution = {
+  problemCode: 'MECH',
+  causeCode: 'COMP',
+  repairCode: 'REPL',
+  resolveCode: 'FULL',
+  resolveText: 'Replaced faulty component. Unit restored to full operation.',
+  fullyResolved: true,
+};
+
 const mockPrisma = {
   serviceOrder: {
     findMany: jest.fn(),
     findUnique: jest.fn(),
     update: jest.fn(),
     count: jest.fn(),
+  },
+  rejectionCode: {
+    findUnique: jest.fn(),
+  },
+  attachment: {
+    create: jest.fn(),
   },
 };
 
@@ -129,31 +156,132 @@ describe('ServiceOrdersService', () => {
   describe('reject', () => {
     it('throws BadRequestException when order is in a non-rejectable status', async () => {
       mockPrisma.serviceOrder.findUnique.mockResolvedValue({ ...mockOrder, status: 'completed' });
-      await expect(service.reject('order-1', mockUser, { reason: 'Unavailable' })).rejects.toThrow(BadRequestException);
+      mockPrisma.rejectionCode.findUnique.mockResolvedValue({ code: 'NOAC', description: 'No access' });
+      await expect(service.reject('order-1', mockUser, { rejectionCode: 'NOAC' })).rejects.toThrow(BadRequestException);
     });
 
-    it('allows rejection of a received order', async () => {
+    it('throws BadRequestException when rejection code does not exist in reference data', async () => {
       mockPrisma.serviceOrder.findUnique.mockResolvedValue(mockOrder);
+      mockPrisma.rejectionCode.findUnique.mockResolvedValue(null);
+      await expect(service.reject('order-1', mockUser, { rejectionCode: 'INVALID' })).rejects.toThrow(BadRequestException);
+    });
+
+    it('allows rejection of a received order with a valid code', async () => {
+      mockPrisma.serviceOrder.findUnique.mockResolvedValue(mockOrder);
+      mockPrisma.rejectionCode.findUnique.mockResolvedValue({ code: 'NOAC', description: 'No access' });
       mockPrisma.serviceOrder.update.mockResolvedValue(mockOrder);
-      await service.reject('order-1', mockUser, { reason: 'Unavailable' });
+      await service.reject('order-1', mockUser, { rejectionCode: 'NOAC' });
       expect(mockPrisma.serviceOrder.update).toHaveBeenCalled();
     });
 
     it('allows rejection of an accepted order', async () => {
       mockPrisma.serviceOrder.findUnique.mockResolvedValue({ ...mockOrder, status: 'accepted' });
+      mockPrisma.rejectionCode.findUnique.mockResolvedValue({ code: 'WRNG', description: 'Wrong engineer' });
       mockPrisma.serviceOrder.update.mockResolvedValue(mockOrder);
-      await service.reject('order-1', mockUser, { reason: 'Unavailable' });
+      await service.reject('order-1', mockUser, { rejectionCode: 'WRNG' });
       expect(mockPrisma.serviceOrder.update).toHaveBeenCalled();
     });
 
-    it('emits job.rejected event with reason', async () => {
+    it('emits job.rejected event with rejectionCode', async () => {
       mockPrisma.serviceOrder.findUnique.mockResolvedValue(mockOrder);
+      mockPrisma.rejectionCode.findUnique.mockResolvedValue({ code: 'NOAC', description: 'No access' });
       mockPrisma.serviceOrder.update.mockResolvedValue(mockOrder);
-      await service.reject('order-1', mockUser, { reason: 'Not available today' });
+      await service.reject('order-1', mockUser, { rejectionCode: 'NOAC' });
       expect(mockEvents.emit).toHaveBeenCalledWith(
         'job.rejected',
-        expect.objectContaining({ orderId: 'order-1', reason: 'Not available today' }),
+        expect.objectContaining({ orderId: 'order-1', rejectionCode: 'NOAC' }),
       );
+    });
+  });
+
+  // ── complete ───────────────────────────────────────────────────────────────
+
+  describe('complete', () => {
+    const completeDto = {
+      signedByName: 'Jane Smith',
+      signatureData: '<svg>...</svg>',
+      resolution: mockResolution,
+    };
+
+    it('throws BadRequestException when order is not in_progress', async () => {
+      mockPrisma.serviceOrder.findUnique.mockResolvedValue({ ...mockOrder, status: 'accepted', activities: [] });
+      await expect(service.complete('order-1', 'user-1', completeDto)).rejects.toThrow(BadRequestException);
+    });
+
+    it('throws BadRequestException when an activity is not complete', async () => {
+      mockPrisma.serviceOrder.findUnique.mockResolvedValue({
+        ...mockOrder,
+        status: 'in_progress',
+        activities: [{ id: 'act-1', status: 'work' }],
+      });
+      await expect(service.complete('order-1', 'user-1', completeDto)).rejects.toThrow(BadRequestException);
+    });
+
+    it('stores signature, signedByName, and resolution on completion', async () => {
+      mockPrisma.serviceOrder.findUnique.mockResolvedValue({
+        ...mockOrder,
+        status: 'in_progress',
+        activities: [{ id: 'act-1', status: 'complete' }],
+      });
+      mockPrisma.serviceOrder.update.mockResolvedValue({ ...mockOrder, status: 'completed' });
+      await service.complete('order-1', 'user-1', completeDto);
+      expect(mockPrisma.serviceOrder.update).toHaveBeenCalledWith({
+        where: { id: 'order-1' },
+        data: expect.objectContaining({
+          status: 'completed',
+          signedByName: 'Jane Smith',
+          signatureData: '<svg>...</svg>',
+          resolution: mockResolution,
+        }),
+      });
+    });
+
+    it('emits job.completed event', async () => {
+      mockPrisma.serviceOrder.findUnique.mockResolvedValue({
+        ...mockOrder,
+        status: 'in_progress',
+        activities: [{ id: 'act-1', status: 'complete' }],
+      });
+      mockPrisma.serviceOrder.update.mockResolvedValue({ ...mockOrder, status: 'completed' });
+      await service.complete('order-1', 'user-1', completeDto);
+      expect(mockEvents.emit).toHaveBeenCalledWith(
+        'job.completed',
+        expect.objectContaining({ orderId: 'order-1', engineerId: 'user-1' }),
+      );
+    });
+  });
+
+  // ── addAttachment ──────────────────────────────────────────────────────────
+
+  describe('addAttachment', () => {
+    it('creates an attachment record after uploading to storage', async () => {
+      mockPrisma.serviceOrder.findUnique.mockResolvedValue({ ...mockOrder, status: 'in_progress' });
+      mockPrisma.attachment.create.mockResolvedValue({
+        id: 'att-1',
+        serviceOrderId: 'order-1',
+        url: 'https://cdn.example.com/file.jpg',
+        filename: 'photo.jpg',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
+      const result = await service.addAttachment('order-1', 'user-1', {
+        filename: 'photo.jpg',
+        mimeType: 'image/jpeg',
+        data: Buffer.from('fake-image-data').toString('base64'),
+      });
+      expect(mockPrisma.attachment.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({ serviceOrderId: 'order-1', filename: 'photo.jpg' }),
+        }),
+      );
+      expect(result.filename).toBe('photo.jpg');
+    });
+
+    it('throws NotFoundException when service order does not exist', async () => {
+      mockPrisma.serviceOrder.findUnique.mockResolvedValue(null);
+      await expect(
+        service.addAttachment('order-1', 'user-1', { filename: 'x.jpg', mimeType: 'image/jpeg', data: 'abc' }),
+      ).rejects.toThrow(NotFoundException);
     });
   });
 

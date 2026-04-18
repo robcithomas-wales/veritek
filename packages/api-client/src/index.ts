@@ -8,6 +8,11 @@ import type {
   User,
   Site,
   StopCode,
+  ProblemCode,
+  CauseCode,
+  RepairCode,
+  ResolveCode,
+  RejectionCode,
   DeliveryType,
   ChecklistQuestion,
   PaginatedResponse,
@@ -18,9 +23,12 @@ import type {
   StockAdjustment,
   Shipment,
   Warehouse,
+  Attachment,
 } from '@veritek/types';
 import type {
   RejectServiceOrderDto,
+  RejectServiceOrderWithCodeDto,
+  CompleteServiceOrderDto,
   CreateActivityDto,
   StartWorkDto,
   StopWorkDto,
@@ -59,13 +67,14 @@ async function request<T>(
   if (params) {
     Object.entries(params).forEach(([k, v]) => url.searchParams.set(k, v));
   }
+  const isFormData = typeof FormData !== 'undefined' && body instanceof FormData;
   const res = await fetch(url.toString(), {
     method,
     headers: {
-      'Content-Type': 'application/json',
+      ...(isFormData ? {} : { 'Content-Type': 'application/json' }),
       ...(token ? { Authorization: `Bearer ${token}` } : {}),
     },
-    body: body !== undefined ? JSON.stringify(body) : undefined,
+    body: body === undefined ? undefined : isFormData ? (body as FormData) : JSON.stringify(body),
   });
   if (!res.ok) {
     const text = await res.text().catch(() => res.statusText);
@@ -110,10 +119,14 @@ export function createApiClient(config: ApiClientConfig) {
       list: () => get<ServiceOrder[]>('/service-orders'),
       get: (id: string) => get<ServiceOrderWithRelations>(`/service-orders/${id}`),
       accept: (id: string) => patch<ServiceOrder>(`/service-orders/${id}/accept`),
-      reject: (id: string, body: RejectServiceOrderDto) =>
+      reject: (id: string, body: RejectServiceOrderWithCodeDto) =>
         patch<ServiceOrder>(`/service-orders/${id}/reject`, body),
+      complete: (id: string, body: CompleteServiceOrderDto) =>
+        post<ServiceOrder>(`/service-orders/${id}/complete`, body),
       history: (params: Record<string, string>) =>
         get<PaginatedResponse<ServiceOrder>>('/service-orders/history', params),
+      addAttachment: (id: string, formData: FormData) =>
+        request<Attachment>(config, 'POST', `/service-orders/${id}/attachments`, formData),
     },
 
     // ── Activities ─────────────────────────────────────────────────────────
@@ -158,6 +171,11 @@ export function createApiClient(config: ApiClientConfig) {
       deliveryTypes: () => get<DeliveryType[]>('/reference/delivery-types'),
       checklists: (itemType: string) =>
         get<ChecklistQuestion[]>('/reference/checklists', { itemType }),
+      problemCodes: () => get<ProblemCode[]>('/reference/problem-codes'),
+      causeCodes: () => get<CauseCode[]>('/reference/cause-codes'),
+      repairCodes: () => get<RepairCode[]>('/reference/repair-codes'),
+      resolveCodes: () => get<ResolveCode[]>('/reference/resolve-codes'),
+      rejectionCodes: () => get<RejectionCode[]>('/reference/rejection-codes'),
     },
 
     // ── Sync ───────────────────────────────────────────────────────────────

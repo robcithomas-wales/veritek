@@ -1,4 +1,5 @@
 import { notFound } from 'next/navigation';
+import { revalidatePath } from 'next/cache';
 import Link from 'next/link';
 import Header from '@/components/header';
 import { adminApi } from '@/lib/api';
@@ -8,6 +9,24 @@ interface PageProps {
   params: Promise<{ id: string }>;
 }
 
+const DOMAIN_EVENTS = [
+  'job.assigned',
+  'job.accepted',
+  'job.rejected',
+  'travel.started',
+  'work.started',
+  'job.completed',
+  'part.ordered',
+  'part.fitted',
+  'part.returned',
+  'clock.in',
+  'clock.out',
+  'private-activity.created',
+  'private-activity.completed',
+  'item.installed',
+  'item.removed',
+];
+
 export default async function WebhookDetailPage({ params }: PageProps) {
   const { id } = await params;
 
@@ -16,6 +35,15 @@ export default async function WebhookDetailPage({ params }: PageProps) {
     wh = await adminApi.webhooks.get(id);
   } catch {
     notFound();
+  }
+
+  async function updateWebhook(formData: FormData) {
+    'use server';
+    const endpointUrl = formData.get('endpointUrl') as string;
+    const isActive    = formData.get('isActive') === 'true';
+    const eventTypes  = DOMAIN_EVENTS.filter((e) => formData.get(`event:${e}`) === 'on');
+    await adminApi.webhooks.update(id, { endpointUrl, isActive, eventTypes });
+    revalidatePath(`/webhooks/${id}`);
   }
 
   return (
@@ -29,36 +57,70 @@ export default async function WebhookDetailPage({ params }: PageProps) {
           <span className="text-gray-900 font-medium">{wh.name}</span>
         </nav>
 
-        {/* Overview */}
-        <section className="bg-white rounded-xl p-6 shadow-sm space-y-4">
+        {/* Edit form */}
+        <section className="bg-white rounded-xl p-6 shadow-sm space-y-5">
           <div className="flex items-center justify-between">
-            <h2 className="text-sm font-semibold text-gray-900">Subscription Details</h2>
+            <h2 className="text-sm font-semibold text-gray-900">Subscription Settings</h2>
             <Badge variant={wh.isActive ? 'green' : 'gray'}>
               {wh.isActive ? 'Active' : 'Inactive'}
             </Badge>
           </div>
-          <dl className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <dt className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Endpoint URL</dt>
-              <dd className="mt-0.5 text-sm text-gray-900 font-mono break-all">{wh.endpointUrl}</dd>
+
+          <form action={updateWebhook} className="space-y-5">
+            {/* Endpoint URL */}
+            <div className="flex flex-col gap-1">
+              <label htmlFor="endpointUrl" className="text-sm font-medium text-gray-700">Endpoint URL</label>
+              <input
+                id="endpointUrl"
+                name="endpointUrl"
+                type="url"
+                required
+                defaultValue={wh.endpointUrl}
+                className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono"
+              />
             </div>
-            <div>
-              <dt className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Created</dt>
-              <dd className="mt-0.5 text-sm text-gray-900">
-                {new Date(wh.createdAt).toLocaleDateString('en-GB', {
-                  day: '2-digit', month: 'short', year: 'numeric',
-                })}
-              </dd>
+
+            {/* Status toggle */}
+            <div className="flex flex-col gap-1">
+              <label htmlFor="isActive" className="text-sm font-medium text-gray-700">Status</label>
+              <select
+                id="isActive"
+                name="isActive"
+                defaultValue={String(wh.isActive)}
+                className="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 max-w-xs"
+              >
+                <option value="true">Active</option>
+                <option value="false">Inactive</option>
+              </select>
             </div>
-            <div className="sm:col-span-2">
-              <dt className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-1">Event Types</dt>
-              <dd className="flex flex-wrap gap-1">
-                {wh.eventTypes.map((et) => (
-                  <Badge key={et} variant="purple" size="sm">{et}</Badge>
+
+            {/* Event types */}
+            <div className="flex flex-col gap-2">
+              <p className="text-sm font-medium text-gray-700">Event types</p>
+              <div className="grid grid-cols-2 gap-2">
+                {DOMAIN_EVENTS.map((event) => (
+                  <label key={event} className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      name={`event:${event}`}
+                      defaultChecked={wh.eventTypes.includes(event)}
+                      className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                    />
+                    <span className="font-mono text-xs">{event}</span>
+                  </label>
                 ))}
-              </dd>
+              </div>
             </div>
-          </dl>
+
+            <div className="flex items-center gap-3 pt-1">
+              <button
+                type="submit"
+                className="bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium px-5 py-2.5 rounded-lg transition-colors"
+              >
+                Save Changes
+              </button>
+            </div>
+          </form>
         </section>
 
         {/* Delivery log */}
@@ -122,16 +184,12 @@ function RetryButton({ webhookId, deliveryId }: { webhookId: string; deliveryId:
   async function retry() {
     'use server';
     await adminApi.webhooks.retry(webhookId, deliveryId);
-    const { revalidatePath } = await import('next/cache');
     revalidatePath(`/webhooks/${webhookId}`);
   }
 
   return (
     <form action={retry}>
-      <button
-        type="submit"
-        className="text-xs text-blue-600 hover:underline font-medium"
-      >
+      <button type="submit" className="text-xs text-blue-600 hover:underline font-medium">
         Retry
       </button>
     </form>

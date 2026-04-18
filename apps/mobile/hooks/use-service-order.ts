@@ -47,3 +47,21 @@ export function useChecklists(itemType: string) {
     enabled: !!itemType,
   });
 }
+
+const refOpts = { staleTime: Infinity, gcTime: 24 * 60 * 60 * 1000 } as const;
+
+export function useProblemCodes() {
+  return useQuery({ queryKey: qk.problemCodes(), queryFn: () => api.reference.problemCodes(), ...refOpts });
+}
+export function useCauseCodes() {
+  return useQuery({ queryKey: qk.causeCodes(), queryFn: () => api.reference.causeCodes(), ...refOpts });
+}
+export function useRepairCodes() {
+  return useQuery({ queryKey: qk.repairCodes(), queryFn: () => api.reference.repairCodes(), ...refOpts });
+}
+export function useResolveCodes() {
+  return useQuery({ queryKey: qk.resolveCodes(), queryFn: () => api.reference.resolveCodes(), ...refOpts });
+}
+export function useRejectionCodes() {
+  return useQuery({ queryKey: qk.rejectionCodes(), queryFn: () => api.reference.rejectionCodes(), ...refOpts });
+}

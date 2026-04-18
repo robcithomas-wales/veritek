@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { Stack } from 'expo-router';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { StatusBar } from 'expo-status-bar';
@@ -10,7 +11,11 @@ import {
   subscribeToJobAssignments,
   unsubscribeFromJobAssignments,
 } from '../lib/realtime';
-import { registerPushToken } from '../lib/push-notifications';
+import {
+  registerPushToken,
+  configureNotificationHandler,
+  addNotificationResponseListener,
+} from '../lib/push-notifications';
 import { useRouter, useSegments } from 'expo-router';
 import { useState } from 'react';
 import type { Session } from '@supabase/supabase-js';
@@ -20,6 +25,13 @@ function AuthGate({ children }: { children: React.ReactNode }) {
   const [ready, setReady] = useState(false);
   const router = useRouter();
   const segments = useSegments();
+
+  // Configure foreground notification display and set up tap handler once on mount
+  useEffect(() => {
+    configureNotificationHandler();
+    const cleanup = addNotificationResponseListener(queryClient);
+    return cleanup;
+  }, []);
 
   useEffect(() => {
     initQueue();
@@ -51,6 +63,7 @@ function AuthGate({ children }: { children: React.ReactNode }) {
 
 export default function RootLayout() {
   return (
+    <GestureHandlerRootView style={{ flex: 1 }}>
     <QueryClientProvider client={queryClient}>
       <AuthGate>
         <Stack screenOptions={{ headerShown: false }}>
@@ -63,5 +76,6 @@ export default function RootLayout() {
         <StatusBar style="dark" />
       </AuthGate>
     </QueryClientProvider>
+    </GestureHandlerRootView>
   );
 }

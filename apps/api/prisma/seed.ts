@@ -1,10 +1,11 @@
 /**
- * Demo seed — creates a test engineer with realistic data for customer demos.
+ * Demo seed — creates a test engineer and a demo admin for customer demos.
  *
  * Run:  pnpm --filter @veritek/api db:seed
  *
  * Safe to run multiple times — uses upsert / skip on conflict.
- * The Supabase auth user password is:  Demo1234!
+ * Engineer password: Demo1234!
+ * Admin password:    Admin1234!
  */
 
 import { PrismaClient } from '@prisma/client';
@@ -17,6 +18,9 @@ const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 
 const DEMO_EMAIL = 'demo.engineer@veritek.demo';
 const DEMO_PASSWORD = 'Demo1234!';
+
+const ADMIN_EMAIL = 'demo.admin@veritek.demo';
+const ADMIN_PASSWORD = 'Admin1234!';
 
 async function main() {
   console.log('Seeding demo data…');
@@ -46,6 +50,25 @@ async function main() {
     console.log(`  Created auth user: ${DEMO_EMAIL}`);
   }
 
+  // ── 1b. Admin auth user ──────────────────────────────────────────────────────
+  let adminSupabaseId: string;
+
+  const existingAdmin = existingUsers?.users.find((u) => u.email === ADMIN_EMAIL);
+  if (existingAdmin) {
+    console.log('  Admin auth user already exists — reusing');
+    adminSupabaseId = existingAdmin.id;
+  } else {
+    const { data, error } = await supabase.auth.admin.createUser({
+      email: ADMIN_EMAIL,
+      password: ADMIN_PASSWORD,
+      email_confirm: true,
+      user_metadata: { firstName: 'Sarah', lastName: 'Admin' },
+    });
+    if (error) throw new Error(`Supabase auth error (admin): ${error.message}`);
+    adminSupabaseId = data.user.id;
+    console.log(`  Created admin auth user: ${ADMIN_EMAIL}`);
+  }
+
   // ── 2. Warehouse ─────────────────────────────────────────────────────────────
   const warehouse = await prisma.warehouse.upsert({
     where: { id: 'seed-warehouse-1' },
@@ -67,6 +90,20 @@ async function main() {
     },
   });
   console.log(`  User: ${user.firstName} ${user.lastName} (${user.id})`);
+
+  // ── 3b. Admin user profile ───────────────────────────────────────────────────
+  const adminUser = await prisma.user.upsert({
+    where: { email: ADMIN_EMAIL },
+    update: {},
+    create: {
+      supabaseId: adminSupabaseId,
+      email: ADMIN_EMAIL,
+      firstName: 'Sarah',
+      lastName: 'Admin',
+      role: 'admin',
+    },
+  });
+  console.log(`  Admin: ${adminUser.firstName} ${adminUser.lastName} (${adminUser.id})`);
 
   // ── 4. Products ──────────────────────────────────────────────────────────────
   const products = await Promise.all([
@@ -178,7 +215,68 @@ async function main() {
     });
   }
 
-  // ── 8. Service orders ────────────────────────────────────────────────────────
+  // ── 8. Resolution codes ──────────────────────────────────────────────────────
+  const problemCodes = [
+    { code: 'MECH', description: 'Mechanical failure' },
+    { code: 'ELEC', description: 'Electrical fault' },
+    { code: 'SOFT', description: 'Software / firmware issue' },
+    { code: 'WEAR', description: 'Normal wear and tear' },
+    { code: 'INST', description: 'Installation issue' },
+    { code: 'ENVR', description: 'Environmental damage' },
+  ];
+  for (const c of problemCodes) {
+    await prisma.problemCode.upsert({ where: { code: c.code }, update: {}, create: c });
+  }
+
+  const causeCodes = [
+    { code: 'COMP', description: 'Component failure' },
+    { code: 'WTEAR', description: 'Wear and tear' },
+    { code: 'MISA', description: 'Misalignment' },
+    { code: 'CONT', description: 'Contamination' },
+    { code: 'POWR', description: 'Power surge / fault' },
+    { code: 'USER', description: 'Operator error' },
+  ];
+  for (const c of causeCodes) {
+    await prisma.causeCode.upsert({ where: { code: c.code }, update: {}, create: c });
+  }
+
+  const repairCodes = [
+    { code: 'REPL', description: 'Part replaced' },
+    { code: 'REPR', description: 'Part repaired' },
+    { code: 'ADJ',  description: 'Adjustment made' },
+    { code: 'CLND', description: 'Cleaned / serviced' },
+    { code: 'UPDT', description: 'Software updated' },
+    { code: 'RMVD', description: 'Component removed' },
+  ];
+  for (const c of repairCodes) {
+    await prisma.repairCode.upsert({ where: { code: c.code }, update: {}, create: c });
+  }
+
+  const resolveCodes = [
+    { code: 'FULL', description: 'Fully resolved' },
+    { code: 'PART', description: 'Partially resolved — parts on order' },
+    { code: 'RESC', description: 'Rescheduled — follow-up required' },
+    { code: 'ESCA', description: 'Escalated to senior engineer' },
+    { code: 'WRTY', description: 'Warranty replacement arranged' },
+  ];
+  for (const c of resolveCodes) {
+    await prisma.resolveCode.upsert({ where: { code: c.code }, update: {}, create: c });
+  }
+
+  const rejectionCodes = [
+    { code: 'NOAC', description: 'No access to site' },
+    { code: 'DUPL', description: 'Duplicate job' },
+    { code: 'WRNG', description: 'Wrong engineer / skill set' },
+    { code: 'CXLD', description: 'Cancelled by customer' },
+    { code: 'OVRQ', description: 'Overqualified — downgrade required' },
+  ];
+  for (const c of rejectionCodes) {
+    await prisma.rejectionCode.upsert({ where: { code: c.code }, update: {}, create: c });
+  }
+
+  console.log('  Resolution / rejection codes: seeded');
+
+  // ── 9. Service orders ────────────────────────────────────────────────────────
   // Order 1: received — just assigned, engineer hasn't touched it yet
   await prisma.serviceOrder.upsert({
     where: { id: 'seed-order-1' },
@@ -187,7 +285,7 @@ async function main() {
       id: 'seed-order-1',
       assignedToId: user.id,
       siteId: sites[0].id,
-      priority: 1,
+      priority: 'critical',
       status: 'received',
       reference: 'SO-2026-0041',
       description:
@@ -203,7 +301,7 @@ async function main() {
       id: 'seed-order-2',
       assignedToId: user.id,
       siteId: sites[1].id,
-      priority: 2,
+      priority: 'medium',
       status: 'accepted',
       reference: 'SO-2026-0039',
       description:
@@ -219,7 +317,7 @@ async function main() {
       id: 'seed-order-3',
       assignedToId: user.id,
       siteId: sites[2].id,
-      priority: 3,
+      priority: 'high',
       status: 'in_progress',
       reference: 'SO-2026-0035',
       description:
@@ -264,7 +362,7 @@ async function main() {
       id: 'seed-order-4',
       assignedToId: user.id,
       siteId: sites[0].id,
-      priority: 4,
+      priority: 'low',
       status: 'completed',
       reference: 'SO-2026-0030',
       description: 'Annual service — chiller unit CH-2. All checks completed.',
@@ -289,7 +387,7 @@ async function main() {
 
   console.log(`  Service orders: 4 (received, accepted, in_progress, completed)`);
 
-  // ── 9. Private activities (My Time tab) ──────────────────────────────────────
+  // ── 10. Private activities (My Time tab) ─────────────────────────────────────
   await prisma.privateActivity.upsert({
     where: { id: 'seed-pa-1' },
     update: {},
@@ -359,7 +457,9 @@ async function main() {
     },
   });
 
-  console.log(`\nDone! Log in with:\n  Email:    ${DEMO_EMAIL}\n  Password: ${DEMO_PASSWORD}\n`);
+  console.log(`\nDone!\n`);
+  console.log(`  Mobile app (engineer):\n    Email:    ${DEMO_EMAIL}\n    Password: ${DEMO_PASSWORD}\n`);
+  console.log(`  Back office portal (admin):\n    Email:    ${ADMIN_EMAIL}\n    Password: ${ADMIN_PASSWORD}\n`);
 }
 
 main()

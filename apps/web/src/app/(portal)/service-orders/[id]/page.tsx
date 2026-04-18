@@ -108,9 +108,21 @@ export default async function ServiceOrderDetailPage({ params }: PageProps) {
         </section>
 
         {/* Assign engineer action */}
-        <section className="bg-white rounded-xl p-6 shadow-sm">
-          <h3 className="text-sm font-semibold text-gray-900 mb-4">Assign Engineer</h3>
-          <AssignForm orderId={order.id} engineers={engineers} currentEngineerId={order.assignedTo?.id} />
+        <section className="bg-white rounded-xl p-6 shadow-sm space-y-5">
+          <div>
+            <h3 className="text-sm font-semibold text-gray-900 mb-4">Assign Engineer</h3>
+            <AssignForm orderId={order.id} engineers={engineers} currentEngineerId={order.assignedTo?.id} />
+          </div>
+
+          {['received', 'accepted', 'in_route', 'in_progress'].includes(order.status) && (
+            <div className="border-t border-gray-100 pt-5">
+              <h3 className="text-sm font-semibold text-gray-900 mb-2">Close Order</h3>
+              <p className="text-xs text-gray-500 mb-3">
+                Mark this order as completed without engineer sign-off. Use this to close stale or admin-resolved orders.
+              </p>
+              <CloseOrderForm orderId={order.id} />
+            </div>
+          )}
         </section>
 
         {/* Activities */}
@@ -217,6 +229,27 @@ export default async function ServiceOrderDetailPage({ params }: PageProps) {
         </section>
       </main>
     </div>
+  );
+}
+
+function CloseOrderForm({ orderId }: { orderId: string }) {
+  async function close() {
+    'use server';
+    await adminApi.serviceOrders.close(orderId);
+    const { revalidatePath } = await import('next/cache');
+    revalidatePath(`/service-orders/${orderId}`);
+    revalidatePath('/service-orders');
+  }
+
+  return (
+    <form action={close}>
+      <button
+        type="submit"
+        className="bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 text-sm font-medium px-4 py-2 rounded-lg transition-colors"
+      >
+        Close Order
+      </button>
+    </form>
   );
 }
 

@@ -59,15 +59,6 @@ export class ActivitiesController {
     return this.activities.stopWork(id, body as any, user);
   }
 
-  @Post('service-orders/:id/complete')
-  complete(
-    @Param('id') serviceOrderId: string,
-    @Body('signedBy') signedBy: string,
-    @CurrentUser() user: User,
-  ) {
-    return this.activities.complete(serviceOrderId, user, signedBy);
-  }
-
   @Post('activities/:id/checklist-responses')
   @UsePipes(new ZodValidationPipe(SubmitChecklistSchema, 'body'))
   submitChecklist(@Param('id') activityId: string, @Body() body: unknown) {

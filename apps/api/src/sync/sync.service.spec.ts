@@ -4,6 +4,7 @@ import { ActivitiesService } from '../activities/activities.service';
 import { MaterialsService } from '../materials/materials.service';
 import { ClockService } from '../clock/clock.service';
 import { ServiceOrdersService } from '../service-orders/service-orders.service';
+import { PrivateActivitiesService } from '../private-activities/private-activities.service';
 import type { User } from '@prisma/client';
 
 const mockUser: User = {
@@ -42,6 +43,12 @@ const mockServiceOrders = {
   reject: jest.fn(),
 };
 
+const mockPrivateActivities = {
+  create: jest.fn(),
+  complete: jest.fn(),
+  remove: jest.fn(),
+};
+
 describe('SyncService', () => {
   let service: SyncService;
 
@@ -54,6 +61,7 @@ describe('SyncService', () => {
         { provide: MaterialsService, useValue: mockMaterials },
         { provide: ClockService, useValue: mockClock },
         { provide: ServiceOrdersService, useValue: mockServiceOrders },
+        { provide: PrivateActivitiesService, useValue: mockPrivateActivities },
       ],
     }).compile();
     service = module.get(SyncService);
@@ -125,6 +133,26 @@ describe('SyncService', () => {
       const ts = '2026-04-15T08:00:00.000Z';
       await service.flush({ mutations: [mutation('/clock', 'POST', { type: 'clock_in', timestamp: ts })] }, mockUser);
       expect(mockClock.record).toHaveBeenCalledWith({ type: 'clock_in', timestamp: ts }, mockUser);
+    });
+
+    it('routes POST /private-activities to privateActivities.create', async () => {
+      mockPrivateActivities.create.mockResolvedValue({});
+      const body = { type: 'training', startTime: '2026-04-15T09:00:00.000Z', subject: 'Safety course' };
+      await service.flush({ mutations: [mutation('/private-activities', 'POST', body)] }, mockUser);
+      expect(mockPrivateActivities.create).toHaveBeenCalledWith(expect.objectContaining({ type: 'training', subject: 'Safety course' }), mockUser);
+    });
+
+    it('routes PATCH /private-activities/:id/complete to privateActivities.complete', async () => {
+      mockPrivateActivities.complete.mockResolvedValue({});
+      const endTime = '2026-04-15T11:00:00.000Z';
+      await service.flush({ mutations: [mutation('/private-activities/pa-1/complete', 'PATCH', { endTime })] }, mockUser);
+      expect(mockPrivateActivities.complete).toHaveBeenCalledWith('pa-1', { endTime }, mockUser);
+    });
+
+    it('routes DELETE /private-activities/:id to privateActivities.remove', async () => {
+      mockPrivateActivities.remove.mockResolvedValue({});
+      await service.flush({ mutations: [mutation('/private-activities/pa-1', 'DELETE', {})] }, mockUser);
+      expect(mockPrivateActivities.remove).toHaveBeenCalledWith('pa-1', mockUser);
     });
   });
 

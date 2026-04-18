@@ -1,17 +1,17 @@
 import { View, Text, StyleSheet } from 'react-native';
+import type { ServiceOrderPriority } from '@veritek/types';
 
-interface Props { priority: number }
+interface Props { priority: ServiceOrderPriority }
 
-function label(p: number): { text: string; color: string } {
-  if (p >= 80) return { text: 'URGENT', color: '#7c3aed' };
-  if (p >= 60) return { text: 'CRITICAL', color: '#dc2626' };
-  if (p >= 40) return { text: 'HIGH', color: '#ea580c' };
-  if (p >= 20) return { text: 'MEDIUM', color: '#ca8a04' };
-  return { text: 'LOW', color: '#16a34a' };
-}
+const CONFIG: Record<ServiceOrderPriority, { text: string; color: string }> = {
+  critical: { text: 'CRITICAL', color: '#dc2626' },
+  high:     { text: 'HIGH',     color: '#ea580c' },
+  medium:   { text: 'MEDIUM',   color: '#ca8a04' },
+  low:      { text: 'LOW',      color: '#16a34a' },
+};
 
 export function PriorityBadge({ priority }: Props) {
-  const { text, color } = label(priority);
+  const { text, color } = CONFIG[priority] ?? CONFIG.medium;
   return (
     <View style={[styles.badge, { backgroundColor: color + '20', borderColor: color }]}>
       <Text style={[styles.text, { color }]}>{text}</Text>
@@ -20,11 +20,6 @@ export function PriorityBadge({ priority }: Props) {
 }
 
 const styles = StyleSheet.create({
-  badge: {
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 4,
-    borderWidth: 1,
-  },
+  badge: { paddingHorizontal: 8, paddingVertical: 2, borderRadius: 4, borderWidth: 1 },
   text: { fontSize: 11, fontWeight: '700', letterSpacing: 0.5 },
 });

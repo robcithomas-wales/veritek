@@ -3,8 +3,15 @@ import { revalidatePath } from 'next/cache';
 import Header from '@/components/header';
 import { adminApi, type ApiKey } from '@/lib/api';
 import { Badge } from '@/components/ui/badge';
+import { NewKeyBanner } from './new-key-banner';
+import { KeyActions } from './key-actions';
 
-export default async function ApiKeysPage() {
+interface PageProps {
+  searchParams: Promise<{ created?: string; plaintext?: string }>;
+}
+
+export default async function ApiKeysPage({ searchParams }: PageProps) {
+  const { plaintext } = await searchParams;
   const keys = await adminApi.apiKeys.list();
 
   return (
@@ -12,6 +19,10 @@ export default async function ApiKeysPage() {
       <Header title="API Keys" />
 
       <main className="p-6 space-y-5">
+        {plaintext && (
+          <NewKeyBanner plaintext={decodeURIComponent(plaintext)} />
+        )}
+
         <div className="flex items-center justify-between">
           <p className="text-sm text-gray-500">{keys.length} key{keys.length !== 1 ? 's' : ''}</p>
           <Link
@@ -43,36 +54,7 @@ export default async function ApiKeysPage() {
                 </tr>
               ) : (
                 keys.map((key) => (
-                  <tr key={key.id} className="hover:bg-gray-50">
-                    <td className="px-5 py-3 font-medium text-gray-900">{key.name}</td>
-                    <td className="px-5 py-3">
-                      <div className="flex flex-wrap gap-1 max-w-xs">
-                        {key.scopes.map((scope) => (
-                          <Badge key={scope} variant="blue" size="sm">{scope}</Badge>
-                        ))}
-                      </div>
-                    </td>
-                    <td className="px-5 py-3 text-gray-500">
-                      {new Date(key.createdAt).toLocaleDateString('en-GB', {
-                        day: '2-digit', month: 'short', year: 'numeric',
-                      })}
-                    </td>
-                    <td className="px-5 py-3 text-gray-500">
-                      {key.lastUsedAt
-                        ? new Date(key.lastUsedAt).toLocaleDateString('en-GB', {
-                            day: '2-digit', month: 'short', year: 'numeric',
-                          })
-                        : '—'}
-                    </td>
-                    <td className="px-5 py-3">
-                      <Badge variant={key.isActive ? 'green' : 'gray'}>
-                        {key.isActive ? 'Active' : 'Suspended'}
-                      </Badge>
-                    </td>
-                    <td className="px-5 py-3">
-                      <KeyActions apiKey={key} />
-                    </td>
-                  </tr>
+                  <ApiKeyRow key={key.id} apiKey={key} />
                 ))
               )}
             </tbody>
@@ -83,7 +65,7 @@ export default async function ApiKeysPage() {
   );
 }
 
-function KeyActions({ apiKey }: { apiKey: ApiKey }) {
+function ApiKeyRow({ apiKey }: { apiKey: ApiKey }) {
   async function suspend() {
     'use server';
     await adminApi.apiKeys.suspend(apiKey.id);
@@ -96,27 +78,49 @@ function KeyActions({ apiKey }: { apiKey: ApiKey }) {
     revalidatePath('/api-keys');
   }
 
-  if (apiKey.isActive) {
-    return (
-      <form action={suspend}>
-        <button
-          type="submit"
-          className="text-xs text-orange-600 hover:underline font-medium"
-        >
-          Suspend
-        </button>
-      </form>
-    );
+  async function revoke() {
+    'use server';
+    await adminApi.apiKeys.revoke(apiKey.id);
+    revalidatePath('/api-keys');
   }
 
   return (
-    <form action={activate}>
-      <button
-        type="submit"
-        className="text-xs text-blue-600 hover:underline font-medium"
-      >
-        Activate
-      </button>
-    </form>
+    <tr className="hover:bg-gray-50">
+      <td className="px-5 py-3 font-medium text-gray-900">{apiKey.name}</td>
+      <td className="px-5 py-3">
+        <div className="flex flex-wrap gap-1 max-w-xs">
+          {apiKey.scopes.map((scope) => (
+            <Badge key={scope} variant="blue" size="sm">{scope}</Badge>
+          ))}
+        </div>
+      </td>
+      <td className="px-5 py-3 text-gray-500">
+        {new Date(apiKey.createdAt).toLocaleDateString('en-GB', {
+          day: '2-digit', month: 'short', year: 'numeric',
+        })}
+      </td>
+      <td className="px-5 py-3 text-gray-500">
+        {apiKey.lastUsedAt
+          ? new Date(apiKey.lastUsedAt).toLocaleDateString('en-GB', {
+              day: '2-digit', month: 'short', year: 'numeric',
+            })
+          : '—'}
+      </td>
+      <td className="px-5 py-3">
+        <Badge variant={apiKey.isActive ? 'green' : 'gray'}>
+          {apiKey.isActive ? 'Active' : 'Suspended'}
+        </Badge>
+      </td>
+      <td className="px-5 py-3">
+        <KeyActions
+          keyId={apiKey.id}
+          keyName={apiKey.name}
+          isActive={apiKey.isActive}
+          suspendAction={suspend}
+          activateAction={activate}
+          revokeAction={revoke}
+        />
+      </td>
+    </tr>
   );
 }

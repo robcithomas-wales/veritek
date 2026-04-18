@@ -56,10 +56,10 @@ function ActivityRow({
   return (
     <View style={styles.row}>
       <View style={styles.rowLeft}>
-        <Text style={styles.rowType}>{typeLabel}</Text>
+        <Text style={styles.rowType}>{typeLabel}{item.subject ? ` — ${item.subject}` : ''}</Text>
         <Text style={styles.rowMeta}>
           {startLabel} · {duration}
-          {item.notes ? ` · ${item.notes}` : ''}
+          {item.location ? ` · ${item.location}` : ''}
         </Text>
       </View>
       <View style={styles.rowActions}>
@@ -80,6 +80,22 @@ function ActivityRow({
   );
 }
 
+function nowHHMM(): string {
+  const d = new Date();
+  return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+}
+
+function parseHHMM(val: string, baseDate: Date = new Date()): Date | null {
+  const m = val.match(/^(\d{1,2}):(\d{2})$/);
+  if (!m) return null;
+  const h = parseInt(m[1]!, 10);
+  const min = parseInt(m[2]!, 10);
+  if (h > 23 || min > 59) return null;
+  const d = new Date(baseDate);
+  d.setHours(h, min, 0, 0);
+  return d;
+}
+
 function NewActivityModal({
   visible,
   onClose,
@@ -87,14 +103,48 @@ function NewActivityModal({
 }: {
   visible: boolean;
   onClose: () => void;
-  onSubmit: (type: PrivateActivityType, notes: string) => void;
+  onSubmit: (
+    type: PrivateActivityType,
+    subject: string,
+    location: string,
+    startTime: string,
+    endTime: string | undefined,
+  ) => void;
 }) {
   const [type, setType] = useState<PrivateActivityType>('travel');
-  const [notes, setNotes] = useState('');
+  const [subject, setSubject] = useState('');
+  const [location, setLocation] = useState('');
+  const [startTime, setStartTime] = useState(nowHHMM);
+  const [endTime, setEndTime] = useState('');
 
   function handleSubmit() {
-    onSubmit(type, notes.trim());
-    setNotes('');
+    if (!subject.trim()) {
+      Alert.alert('Subject required', 'Please enter a description for this time block.');
+      return;
+    }
+    const start = parseHHMM(startTime);
+    if (!start) {
+      Alert.alert('Invalid start time', 'Enter a start time in HH:MM format, e.g. 09:30');
+      return;
+    }
+    let end: Date | undefined;
+    if (endTime.trim()) {
+      const parsed = parseHHMM(endTime);
+      if (!parsed) {
+        Alert.alert('Invalid end time', 'Enter an end time in HH:MM format, e.g. 11:00');
+        return;
+      }
+      if (parsed <= start) {
+        Alert.alert('Invalid end time', 'End time must be after start time.');
+        return;
+      }
+      end = parsed;
+    }
+    onSubmit(type, subject.trim(), location.trim(), start.toISOString(), end?.toISOString());
+    setSubject('');
+    setLocation('');
+    setStartTime(nowHHMM());
+    setEndTime('');
     setType('travel');
     onClose();
   }
@@ -117,27 +167,67 @@ function NewActivityModal({
               style={[styles.typeChip, type === t.value && styles.typeChipActive]}
               onPress={() => setType(t.value)}
             >
-              <Text
-                style={[styles.typeChipText, type === t.value && styles.typeChipTextActive]}
-              >
+              <Text style={[styles.typeChipText, type === t.value && styles.typeChipTextActive]}>
                 {t.label}
               </Text>
             </TouchableOpacity>
           ))}
         </View>
 
-        <Text style={styles.fieldLabel}>Notes (optional)</Text>
+        <Text style={styles.fieldLabel}>Subject <Text style={{ color: '#dc2626' }}>*</Text></Text>
         <TextInput
-          style={styles.textInput}
-          value={notes}
-          onChangeText={setNotes}
-          placeholder="e.g. WFH training day"
+          style={[styles.textInput, styles.singleLine]}
+          value={subject}
+          onChangeText={setSubject}
+          placeholder="e.g. Hydraulic systems refresher"
           placeholderTextColor="#9ca3af"
-          multiline
+          returnKeyType="next"
+        />
+
+        <View style={styles.timeRow}>
+          <View style={styles.timeField}>
+            <Text style={styles.fieldLabel}>Start time <Text style={{ color: '#dc2626' }}>*</Text></Text>
+            <TextInput
+              style={[styles.textInput, styles.singleLine, styles.timeInput]}
+              value={startTime}
+              onChangeText={setStartTime}
+              placeholder="09:00"
+              placeholderTextColor="#9ca3af"
+              keyboardType="numbers-and-punctuation"
+              returnKeyType="next"
+              maxLength={5}
+            />
+          </View>
+          <View style={styles.timeField}>
+            <Text style={styles.fieldLabel}>End time <Text style={{ color: '#6b7280', fontWeight: '400' }}>(optional)</Text></Text>
+            <TextInput
+              style={[styles.textInput, styles.singleLine, styles.timeInput]}
+              value={endTime}
+              onChangeText={setEndTime}
+              placeholder="11:30"
+              placeholderTextColor="#9ca3af"
+              keyboardType="numbers-and-punctuation"
+              returnKeyType="next"
+              maxLength={5}
+            />
+          </View>
+        </View>
+        <Text style={styles.timeHint}>
+          {endTime.trim() ? 'This time block will be saved as completed.' : 'Leave end time blank to mark as done later.'}
+        </Text>
+
+        <Text style={styles.fieldLabel}>Location (optional)</Text>
+        <TextInput
+          style={[styles.textInput, styles.singleLine]}
+          value={location}
+          onChangeText={setLocation}
+          placeholder="e.g. Birmingham depot"
+          placeholderTextColor="#9ca3af"
+          returnKeyType="done"
         />
 
         <TouchableOpacity style={styles.submitBtn} onPress={handleSubmit}>
-          <Text style={styles.submitBtnText}>Start</Text>
+          <Text style={styles.submitBtnText}>{endTime.trim() ? 'Save' : 'Start'}</Text>
         </TouchableOpacity>
       </View>
     </Modal>
@@ -153,10 +243,22 @@ export default function PrivateActivityScreen() {
 
   const activities = (data as any)?.data ?? data ?? [];
 
-  function handleCreate(type: PrivateActivityType, notes: string) {
+  function handleCreate(
+    type: PrivateActivityType,
+    subject: string,
+    location: string,
+    startTime: string,
+    endTime: string | undefined,
+  ) {
     create(
       {} as any,
-      { type, startTime: new Date().toISOString(), ...(notes ? { notes } : {}) },
+      {
+        type,
+        startTime,
+        ...(endTime ? { endTime } : {}),
+        subject,
+        ...(location ? { location } : {}),
+      },
     );
   }
 
@@ -297,9 +399,28 @@ const styles = StyleSheet.create({
     padding: 12,
     fontSize: 15,
     color: '#111827',
-    minHeight: 80,
-    textAlignVertical: 'top',
-    marginBottom: 24,
+    marginBottom: 20,
+  },
+  singleLine: {
+    minHeight: 44,
+  },
+  timeRow: {
+    flexDirection: 'row',
+    gap: 12,
+    marginBottom: 0,
+  },
+  timeField: {
+    flex: 1,
+  },
+  timeInput: {
+    textAlign: 'center',
+    letterSpacing: 1,
+  },
+  timeHint: {
+    fontSize: 12,
+    color: '#6b7280',
+    marginBottom: 20,
+    marginTop: -12,
   },
   submitBtn: {
     backgroundColor: '#1d4ed8',
