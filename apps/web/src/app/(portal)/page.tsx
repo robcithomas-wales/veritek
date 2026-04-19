@@ -34,10 +34,10 @@ export default async function DashboardPage() {
     <div className="flex-1 bg-gray-50 min-h-screen">
       <Header title="Dashboard" />
 
-      <main className="p-6 space-y-6">
+      <main className="p-4 md:p-6 space-y-6">
 
         {/* KPI row */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <KpiCard
             label="Open Orders"
             value={totalOpen}
@@ -88,10 +88,10 @@ export default async function DashboardPage() {
         )}
 
         {/* Status + Priority */}
-        <div className="grid grid-cols-1 xl:grid-cols-5 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
 
           {/* Status breakdown */}
-          <section className="xl:col-span-3">
+          <section className="lg:col-span-3">
             <SectionHeading>Orders by Status</SectionHeading>
             <div className="grid grid-cols-2 gap-3">
               {openStatuses.map((status) => {
@@ -122,7 +122,7 @@ export default async function DashboardPage() {
           </section>
 
           {/* Priority breakdown */}
-          <section className="xl:col-span-2">
+          <section className="lg:col-span-2">
             <SectionHeading>Orders by Priority</SectionHeading>
             <div className="bg-white rounded-xl border border-gray-200 p-5 space-y-4">
               {(['critical', 'high', 'medium', 'low'] as const).map((key) => {
@@ -151,10 +151,10 @@ export default async function DashboardPage() {
         </div>
 
         {/* Engineers on shift + Recent completions */}
-        <div className="grid grid-cols-1 xl:grid-cols-5 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
 
           {/* Engineers on shift */}
-          <section className="xl:col-span-2">
+          <section className="lg:col-span-2">
             <SectionHeading>Engineers on Shift</SectionHeading>
             <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
               {clockedInEngineers.length === 0 ? (
@@ -191,7 +191,7 @@ export default async function DashboardPage() {
           </section>
 
           {/* Recent completions */}
-          <section className="xl:col-span-3">
+          <section className="lg:col-span-3">
             <SectionHeading>Recent Completions</SectionHeading>
             <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
               {stats.recentlyCompleted.length === 0 ? (
@@ -200,7 +200,7 @@ export default async function DashboardPage() {
                   <p className="text-gray-400 text-sm">No completed orders yet</p>
                 </div>
               ) : (
-                <table className="w-full text-sm">
+                <div className="overflow-x-auto"><table className="w-full text-sm min-w-[480px]">
                   <thead>
                     <tr className="bg-gray-50 border-b border-gray-200">
                       <th className="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Reference</th>
@@ -234,7 +234,7 @@ export default async function DashboardPage() {
                       );
                     })}
                   </tbody>
-                </table>
+                </table></div>
               )}
             </div>
           </section>

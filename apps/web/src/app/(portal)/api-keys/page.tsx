@@ -34,7 +34,8 @@ export default async function ApiKeysPage({ searchParams }: PageProps) {
         </div>
 
         <div className="bg-white rounded-xl shadow-sm overflow-hidden">
-          <table className="w-full text-sm">
+          <div className="overflow-x-auto">
+          <table className="w-full text-sm min-w-[640px]">
             <thead className="bg-gray-50">
               <tr>
                 <th className="text-left px-5 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide">Name</th>
@@ -59,6 +60,7 @@ export default async function ApiKeysPage({ searchParams }: PageProps) {
               )}
             </tbody>
           </table>
+          </div>
         </div>
       </main>
     </div>
